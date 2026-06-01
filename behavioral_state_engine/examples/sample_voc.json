@@ -1,0 +1,15 @@
+{
+  "user_id": "U100",
+  "signals": {
+    "frustration_signal": 0.68,
+    "urgency_signal": 0.72,
+    "trust_signal": 0.41,
+    "retention_risk": 0.63,
+    "engagement_signal": 0.55,
+    "escalation_risk": 0.70
+  },
+  "behavioral_tags": [
+    "emotionally_negative"
+  ],
+  "confidence": 0.82
+}

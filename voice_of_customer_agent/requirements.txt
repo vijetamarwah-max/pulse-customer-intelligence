@@ -1,0 +1,4 @@
+numpy
+openai
+psycopg[binary]
+pydantic

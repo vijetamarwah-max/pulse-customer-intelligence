@@ -26,6 +26,25 @@ pip install -r requirements.txt
 python -m event_understanding_agent.run_example
 ```
 
+## Local Secrets
+
+For OpenAI-backed audio transcription, create a local `.env` file from
+`.env.example` and set `OPENAI_API_KEY`. The `.env` file is ignored by Git.
+
+For pgvector-backed similarity search, set `PULSE_DATABASE_URL` in `.env`.
+
+## Vector Store
+
+Pulse uses pgvector as the production vector database. The current agents still
+run with in-memory NumPy vectors by default, but they can use `PGVectorStore`
+when a Postgres database with the pgvector extension is available.
+
+Seed canonical Event and VoC templates with:
+
+```bash
+python -m pulse_vector_store.seed_pgvector
+```
+
 ## Output Contract
 
 The agent returns `EventUnderstandingOutput`, a strict Pydantic model with:

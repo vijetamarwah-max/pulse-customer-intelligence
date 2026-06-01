@@ -1,0 +1,14 @@
+{
+  "user_id": "U100",
+  "crm_context": {
+    "customer_tier": "gold",
+    "ltv_segment": "high_value",
+    "days_since_signup": 420,
+    "total_orders": 16,
+    "average_order_value": 240,
+    "preferred_language": "en",
+    "geography": "US",
+    "loyalty_member": true,
+    "last_purchase_days_ago": 12
+  }
+}

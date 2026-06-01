@@ -1,0 +1,12 @@
+{
+  "rules": [
+    {
+      "condition": "frustration_signal > 0.85",
+      "action": "high_priority_review"
+    },
+    {
+      "condition": "retention_risk > 0.90",
+      "action": "suppress_promotional_campaigns"
+    }
+  ]
+}
