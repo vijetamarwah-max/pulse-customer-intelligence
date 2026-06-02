@@ -45,6 +45,47 @@ Seed canonical Event and VoC templates with:
 python -m pulse_vector_store.seed_pgvector
 ```
 
+## Decisioning Flow
+
+The refined Pulse AI decisioning flow separates prediction from action choice:
+
+```text
+Behavioral State Engine
+        |
+Behavioral Memory + Similarity Retrieval
+        |
+Outcome Estimator
+        |
+Predicted Outcomes
+        |
+NBA Decision Engine
+        |
+Recommended Action
+```
+
+`behavioral_memory` estimates likely outcomes for possible actions. `nba_engine`
+uses those predicted outcomes, business goals, and constraints to choose the
+recommended action.
+
+Run the examples with:
+
+```bash
+python -m behavioral_memory.examples.run_example
+python -m nba_engine.examples.run_example
+```
+
+## Outcome Tracking
+
+`intervention_outcome_tracker` measures causal business impact after Pulse
+recommendations are executed. It joins decisions, execution records, observed
+outcomes, attribution rules, holdout/control logic, and executive evidence.
+
+Run it with:
+
+```bash
+python -m intervention_outcome_tracker.examples.run_example
+```
+
 ## Output Contract
 
 The agent returns `EventUnderstandingOutput`, a strict Pydantic model with:

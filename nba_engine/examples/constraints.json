@@ -1,0 +1,5 @@
+{
+  "discounts_allowed": false,
+  "send_allowed": true,
+  "suppress_if_high_fatigue": false
+}

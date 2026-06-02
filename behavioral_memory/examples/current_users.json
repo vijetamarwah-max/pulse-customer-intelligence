@@ -1,0 +1,32 @@
+[
+  {
+    "user_id": "A",
+    "state_vector": {
+      "purchase_readiness": 0.87,
+      "communication_fatigue": 0.82,
+      "trust_level": 0.72,
+      "retention_risk": 0.50,
+      "engagement_probability": 0.52
+    }
+  },
+  {
+    "user_id": "B",
+    "state_vector": {
+      "purchase_readiness": 0.88,
+      "communication_fatigue": 0.15,
+      "trust_level": 0.81,
+      "retention_risk": 0.22,
+      "engagement_probability": 0.78
+    }
+  },
+  {
+    "user_id": "C",
+    "state_vector": {
+      "purchase_readiness": 0.40,
+      "communication_fatigue": 0.20,
+      "trust_level": 0.82,
+      "retention_risk": 0.20,
+      "engagement_probability": 0.72
+    }
+  }
+]

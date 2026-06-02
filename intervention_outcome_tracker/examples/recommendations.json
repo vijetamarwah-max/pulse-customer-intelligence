@@ -1,0 +1,29 @@
+[
+  {
+    "user_id": "A",
+    "state_label": "high_intent_high_fatigue",
+    "recommendation": "suppress",
+    "channel": "none",
+    "send_time": "none",
+    "group": "PULSE",
+    "executed": true
+  },
+  {
+    "user_id": "B",
+    "state_label": "high_intent_receptive",
+    "recommendation": "send_product_recommendation",
+    "channel": "push",
+    "send_time": "20:30",
+    "group": "PULSE",
+    "executed": true
+  },
+  {
+    "user_id": "C",
+    "state_label": "balanced_state",
+    "recommendation": "send_content",
+    "channel": "email",
+    "send_time": "10:00",
+    "group": "CONTROL",
+    "executed": false
+  }
+]

@@ -1,0 +1,17 @@
+{
+  "suppress": {
+    "revenue": 18,
+    "engagement": 0.2,
+    "retention": 0.8
+  },
+  "send_product_recommendation": {
+    "revenue": 14,
+    "engagement": 0.5,
+    "retention": 0.4
+  },
+  "send_content": {
+    "revenue": 5,
+    "engagement": 0.8,
+    "retention": 0.5
+  }
+}

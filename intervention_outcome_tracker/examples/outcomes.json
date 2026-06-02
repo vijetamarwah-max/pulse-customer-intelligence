@@ -1,0 +1,23 @@
+[
+  {
+    "user_id": "A",
+    "opened": false,
+    "clicked": false,
+    "purchased": true,
+    "revenue": 110
+  },
+  {
+    "user_id": "B",
+    "opened": true,
+    "clicked": true,
+    "purchased": true,
+    "revenue": 180
+  },
+  {
+    "user_id": "C",
+    "opened": false,
+    "clicked": false,
+    "purchased": true,
+    "revenue": 90
+  }
+]

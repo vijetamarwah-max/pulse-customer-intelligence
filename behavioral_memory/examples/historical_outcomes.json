@@ -1,0 +1,86 @@
+[
+  {
+    "state_vector": {
+      "purchase_readiness": 0.85,
+      "communication_fatigue": 0.80,
+      "trust_level": 0.70,
+      "retention_risk": 0.45,
+      "engagement_probability": 0.55
+    },
+    "action": "send_product_recommendation",
+    "converted": true,
+    "revenue": 120,
+    "engagement": 0.45,
+    "retention": 0.40
+  },
+  {
+    "state_vector": {
+      "purchase_readiness": 0.82,
+      "communication_fatigue": 0.78,
+      "trust_level": 0.65,
+      "retention_risk": 0.55,
+      "engagement_probability": 0.50
+    },
+    "action": "suppress",
+    "converted": true,
+    "revenue": 110,
+    "engagement": 0.20,
+    "retention": 0.85
+  },
+  {
+    "state_vector": {
+      "purchase_readiness": 0.30,
+      "communication_fatigue": 0.75,
+      "trust_level": 0.40,
+      "retention_risk": 0.80,
+      "engagement_probability": 0.20
+    },
+    "action": "suppress",
+    "converted": false,
+    "revenue": 0,
+    "engagement": 0.05,
+    "retention": 0.55
+  },
+  {
+    "state_vector": {
+      "purchase_readiness": 0.90,
+      "communication_fatigue": 0.10,
+      "trust_level": 0.80,
+      "retention_risk": 0.20,
+      "engagement_probability": 0.75
+    },
+    "action": "send_product_recommendation",
+    "converted": true,
+    "revenue": 200,
+    "engagement": 0.70,
+    "retention": 0.45
+  },
+  {
+    "state_vector": {
+      "purchase_readiness": 0.50,
+      "communication_fatigue": 0.20,
+      "trust_level": 0.80,
+      "retention_risk": 0.25,
+      "engagement_probability": 0.65
+    },
+    "action": "send_content",
+    "converted": true,
+    "revenue": 50,
+    "engagement": 0.85,
+    "retention": 0.50
+  },
+  {
+    "state_vector": {
+      "purchase_readiness": 0.42,
+      "communication_fatigue": 0.22,
+      "trust_level": 0.84,
+      "retention_risk": 0.20,
+      "engagement_probability": 0.70
+    },
+    "action": "send_content",
+    "converted": true,
+    "revenue": 58,
+    "engagement": 0.88,
+    "retention": 0.52
+  }
+]

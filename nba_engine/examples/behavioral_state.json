@@ -1,0 +1,14 @@
+{
+  "user_id": "A",
+  "state_vector": {
+    "purchase_readiness": 0.82,
+    "engagement_probability": 0.55,
+    "communication_fatigue": 0.76,
+    "retention_risk": 0.63,
+    "trust_level": 0.68,
+    "discount_sensitivity": 0.35,
+    "brand_affinity": 0.87,
+    "intervention_receptiveness": 0.25
+  },
+  "confidence": 0.87
+}
