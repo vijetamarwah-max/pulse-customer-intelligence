@@ -4,6 +4,7 @@ from .embeddings import EmbeddingEngine
 from .llm import LLMReasoning
 from .rules import RuleEngine
 from .schema import EventUnderstandingOutput
+from .semantic_event_mapper import SemanticEventMapper
 
 
 class EventUnderstandingAgent:
@@ -12,12 +13,27 @@ class EventUnderstandingAgent:
         embedder: Optional[EmbeddingEngine] = None,
         llm: Optional[LLMReasoning] = None,
         rules: Optional[RuleEngine] = None,
+        semantic_mapper: Optional[SemanticEventMapper] = None,
     ) -> None:
         self.embedder = embedder or EmbeddingEngine()
         self.llm = llm or LLMReasoning()
         self.rules = rules or RuleEngine()
+        self.semantic_mapper = semantic_mapper or SemanticEventMapper()
 
     def build_user_embedding(self, events: Dict[str, Any]):
+        if "raw_events" in events:
+            semantic_summary = self.semantic_mapper.summarize(events["raw_events"])
+            vector = [
+                semantic_summary["exploration_intent_events"] * 0.3,
+                (
+                    semantic_summary["purchase_intent_events"]
+                    + semantic_summary["consideration_intent_events"] * 0.5
+                )
+                * 0.8,
+                semantic_summary["churn_risk_events"] * 0.9,
+            ]
+            return self.embedder.embed_sequence(vector)
+
         vector = [
             events.get("view_count", 0) * 0.3,
             events.get("cart_actions", 0) * 0.8,

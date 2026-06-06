@@ -1,0 +1,13 @@
+{
+  "add_to_cart": "purchase_intent",
+  "cart_abandoned": "purchase_intent",
+  "checkout_started": "purchase_intent",
+  "product_view": "exploration_intent",
+  "pdp_loaded": "exploration_intent",
+  "item_view": "exploration_intent",
+  "wishlist_add": "consideration_intent",
+  "search": "exploration_intent",
+  "support_complaint": "churn_risk",
+  "subscription_cancelled": "churn_risk",
+  "purchase": "conversion"
+}

@@ -7,6 +7,13 @@ def main() -> None:
     agent = EventUnderstandingAgent()
 
     events = {
+        "raw_events": [
+            "product_view",
+            "product_view",
+            "search",
+            "add_to_cart",
+            "cart_abandoned",
+        ],
         "view_count": 8,
         "cart_actions": 2,
         "checkout_actions": 0,

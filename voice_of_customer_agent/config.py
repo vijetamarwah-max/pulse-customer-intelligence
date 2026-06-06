@@ -1,6 +1,8 @@
-GEMINI_MODEL = "gemini-2.5-pro"
+VOC_REASONING_MODEL_USE_CASE = "voc_reasoning"
 
-OPENAI_TRANSCRIPTION_MODEL = "gpt-4o-transcribe"
+OPENAI_TRANSCRIPTION_MODEL_USE_CASE = "audio_transcription"
+
+VOC_PROCESSING_TRIGGER = "new_customer_communication"
 
 EMBEDDING_THRESHOLD = 0.70
 

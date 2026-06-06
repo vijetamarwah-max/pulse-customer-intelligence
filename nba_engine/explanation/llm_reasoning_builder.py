@@ -2,13 +2,18 @@ import json
 import os
 from pathlib import Path
 
+from model_router.routing_policy import ModelRoutingPolicy
+
+from .prompts import NBA_EXPLANATION_SYSTEM_PROMPT
+
 
 class LLMReasoningBuilder:
     """OpenAI-backed NBA decision explanation builder."""
 
     def __init__(self, model=None):
         self._load_local_env()
-        self.model = model or os.getenv("NBA_LLM_MODEL", "gpt-5.1")
+        self.model_router = ModelRoutingPolicy()
+        self.model = model or self.model_router.model_for("nba_explanation")
 
     def build(
         self,
@@ -37,12 +42,7 @@ class LLMReasoningBuilder:
             input=[
                 {
                     "role": "system",
-                    "content": (
-                        "You explain NBA decisions for an enterprise customer "
-                        "engagement product. Provide a concise, auditable business "
-                        "rationale. Do not reveal hidden chain-of-thought. Use the "
-                        "given counterfactual values directly."
-                    ),
+                    "content": NBA_EXPLANATION_SYSTEM_PROMPT,
                 },
                 {
                     "role": "user",

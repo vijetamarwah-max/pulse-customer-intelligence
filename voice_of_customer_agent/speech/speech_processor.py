@@ -2,12 +2,15 @@ import os
 from pathlib import Path
 from typing import Dict
 
-from ..config import OPENAI_TRANSCRIPTION_MODEL
+from model_router.routing_policy import ModelRoutingPolicy
+
+from ..config import OPENAI_TRANSCRIPTION_MODEL_USE_CASE
 
 
 class SpeechProcessor:
     def __init__(self) -> None:
         self._load_local_env()
+        self.model_router = ModelRoutingPolicy()
 
     def process_audio(self, file_path: str) -> Dict[str, object]:
         """Transcribe audio and return normalized speech metadata.
@@ -38,7 +41,7 @@ class SpeechProcessor:
         client = OpenAI()
         with audio_path.open("rb") as audio_file:
             transcription = client.audio.transcriptions.create(
-                model=OPENAI_TRANSCRIPTION_MODEL,
+                model=self.model_router.model_for(OPENAI_TRANSCRIPTION_MODEL_USE_CASE),
                 file=audio_file,
                 response_format="text",
             )

@@ -67,6 +67,42 @@ Recommended Action
 uses those predicted outcomes, business goals, and constraints to choose the
 recommended action.
 
+## Cost-Aware Processing
+
+Pulse avoids running LLMs per user. LLMs classify enterprise event types into a
+semantic taxonomy when mappings are created or refreshed. Runtime Event
+Understanding uses deterministic lookup tables plus embeddings/rules across
+users.
+
+Processing defaults:
+
+- Event Understanding: batch every 6-24 hours, configured as 12 hours.
+- VoC Agent: runs only when a new call, chat, support ticket, or message arrives.
+- Behavioral State Engine: hybrid mode. Critical events refresh state in real
+  time; all other states are refreshed in scheduled batch jobs.
+
+## Model Routing
+
+Pulse centralizes model selection in `model_router`:
+
+- Event taxonomy classification: `gpt-5.1`, medium reasoning.
+- Event runtime fallback: `gpt-5-mini`, low reasoning, only for low-confidence cases.
+- VoC reasoning: `gpt-5.1`, medium reasoning.
+- NBA explanation: `gpt-5-mini`, no reasoning, because the decision is already computed.
+- Audio transcription: `gpt-4o-transcribe`.
+
+Environment variables in `.env` can override these defaults without changing
+agent code.
+
+Event Understanding prompts live in `event_understanding_agent/prompts.py`.
+`EVENT_TAXONOMY_CLASSIFICATION_PROMPT` is used for taxonomy-build-time event
+classification. `EVENT_RUNTIME_REASONING_PROMPT` is used only for ambiguous or
+low-confidence runtime fallback cases after lookup, embeddings, and rules.
+
+VoC reasoning uses `VOC_REASONING_SYSTEM_PROMPT` from
+`voice_of_customer_agent/llm/prompts.py`. NBA explanations use
+`NBA_EXPLANATION_SYSTEM_PROMPT` from `nba_engine/explanation/prompts.py`.
+
 Run the examples with:
 
 ```bash
