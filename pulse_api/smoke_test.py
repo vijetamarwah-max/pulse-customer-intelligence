@@ -6,6 +6,7 @@ from .main import app
 
 def main():
     client = TestClient(app)
+    lovable_origin = "https://pulse-customer-intelligence.lovable.app"
 
     health = client.get("/api/health")
     login = client.post(
@@ -14,11 +15,11 @@ def main():
     )
     data = client.get(
         "/api/get-data",
-        headers={"Origin": DEFAULT_CORS_ORIGINS[0]},
+        headers={"Origin": lovable_origin},
     )
     profile = client.get(
         "/api/profile",
-        headers={"Origin": DEFAULT_CORS_ORIGINS[0]},
+        headers={"Origin": lovable_origin},
     )
 
     print(
@@ -28,6 +29,7 @@ def main():
             "get_data": data.status_code,
             "profile": profile.status_code,
             "cors_origin": data.headers.get("access-control-allow-origin"),
+            "expected_origin": lovable_origin,
         }
     )
 

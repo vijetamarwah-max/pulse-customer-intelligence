@@ -8,12 +8,13 @@ Allowed origins are configured in `pulse_api/config.py` and can be overridden
 with:
 
 ```text
-PULSE_CORS_ORIGINS=https://pulse-behavior-ai.lovable.app,https://your-production-domain.com
+PULSE_CORS_ORIGINS=https://pulse-customer-intelligence.lovable.app,https://pulse-behavior-ai.lovable.app,https://your-production-domain.com
 ```
 
 Default allowed origins include:
 
 - `https://pulse-behavior-ai.lovable.app`
+- `https://pulse-customer-intelligence.lovable.app`
 - `https://id-preview--8ca02ac1-f8a8-4c13-ba27-d65509f12369.lovable.app`
 - local development origins
 

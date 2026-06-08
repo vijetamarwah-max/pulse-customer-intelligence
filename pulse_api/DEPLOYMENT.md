@@ -14,7 +14,7 @@ Health check path: /api/health
 4. Set these environment variables in Render:
 
 ```text
-PULSE_CORS_ORIGINS=https://pulse-behavior-ai.lovable.app,https://id-preview--8ca02ac1-f8a8-4c13-ba27-d65509f12369.lovable.app,https://your-production-domain.com
+PULSE_CORS_ORIGINS=https://pulse-customer-intelligence.lovable.app,https://pulse-behavior-ai.lovable.app,https://id-preview--8ca02ac1-f8a8-4c13-ba27-d65509f12369.lovable.app,https://your-production-domain.com
 OPENAI_API_KEY=your_real_key
 PULSE_DATABASE_URL=your_postgres_pgvector_url
 NBA_LLM_MODEL=gpt-5-mini

@@ -2,6 +2,7 @@ import os
 
 
 DEFAULT_CORS_ORIGINS = [
+    "https://pulse-customer-intelligence.lovable.app",
     "https://pulse-behavior-ai.lovable.app",
     "https://id-preview--8ca02ac1-f8a8-4c13-ba27-d65509f12369.lovable.app",
     "http://localhost:3000",

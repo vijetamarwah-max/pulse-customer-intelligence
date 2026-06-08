@@ -157,7 +157,7 @@ Run locally with:
 uvicorn pulse_api.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-CORS is enabled for the Lovable production URL and preview URL by default.
+CORS is enabled for the Lovable production URLs and preview URL by default.
 Deployment files are included:
 
 - `Dockerfile`
