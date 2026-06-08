@@ -34,6 +34,7 @@ uvicorn pulse_api.asgi:app --host 0.0.0.0 --port 8000
 
 ```bash
 python -m pulse_api.smoke_test
+python -m pulse_api.enterprise_smoke_test
 ```
 
 ## Frontend Endpoints
@@ -42,5 +43,127 @@ python -m pulse_api.smoke_test
 - `GET /api/get-data`
 - `POST /api/login`
 - `POST /api/behavioral-state`
+- `POST /api/enterprise-data`
+- `GET /api/action-centre`
+- `GET /api/demo/manual-event-stream`
+- `POST /api/demo/run-manual-event-stream`
+
+## Enterprise Data Flow
+
+Lovable should use this flow when a user connects or uploads enterprise data:
+
+1. Send events, comms history, CRM context, goals, and constraints to:
+
+```text
+POST /api/enterprise-data
+```
+
+2. Load live Action Centre recommendations from:
+
+```text
+GET /api/action-centre
+```
+
+3. Continue loading the dashboard from:
+
+```text
+GET /api/get-data
+```
+
+After enterprise data is ingested, `/api/get-data` returns `data_mode:
+enterprise_connected`. Before ingestion, it returns `data_mode: demo`.
+
+Example ingestion payload:
+
+```json
+{
+  "workspace_id": "default",
+  "source_name": "braze_segment_upload",
+  "business_goal": "increase_revenue",
+  "constraints": {
+    "discounts_allowed": false,
+    "send_allowed": true,
+    "suppress_if_high_fatigue": false
+  },
+  "users": [
+    {
+      "user_id": "U100",
+      "events": {
+        "raw_events": [
+          "product_view",
+          "search",
+          "add_to_cart",
+          "checkout_started"
+        ]
+      },
+      "comms_history": [
+        {
+          "channel": "support_ticket",
+          "message": "I have followed up three times and nobody resolved my issue. This is frustrating."
+        }
+      ],
+      "crm_context": {
+        "customer_tier": "gold",
+        "ltv_segment": "high_value",
+        "total_orders": 18,
+        "average_order_value": 220
+      },
+      "user_state": {
+        "inactive_days": 1,
+        "events_7d": 8
+      }
+    }
+  ]
+}
+```
 
 See `DEPLOYMENT.md` for Render deployment steps.
+
+## Manual 5-User Demo Flow
+
+Use this when the user wants to simulate connecting enterprise event stream data
+without a real connector.
+
+1. Load the editable demo payload:
+
+```text
+GET /api/demo/manual-event-stream
+```
+
+2. Let the user review or edit the five users:
+
+- raw event stream
+- communication history
+- CRM context
+- user state
+
+3. Either submit the edited payload to:
+
+```text
+POST /api/enterprise-data
+```
+
+Or run the default 5-user demo immediately:
+
+```text
+POST /api/demo/run-manual-event-stream
+```
+
+4. Show the processing journey from:
+
+```text
+GET /api/action-centre
+```
+
+The response includes `processing_trace`, where each user has these steps:
+
+- Manual Event Stream
+- Event Understanding Agent
+- Voice of Customer Agent
+- CRM Context
+- Behavioral State Engine
+- Outcome Estimator
+- NBA Decision Engine
+
+Render this trace next to each recommendation to show how Pulse moves from
+manual events to Action Centre decisions.

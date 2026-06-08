@@ -24,11 +24,18 @@ class VOCLLMReasoner:
         acoustic_features: Dict[str, object],
     ) -> Dict[str, object]:
         if self._usable_api_key():
-            return self._infer_with_openai(
-                transcript,
-                embedding_scores,
-                acoustic_features,
-            )
+            try:
+                return self._infer_with_openai(
+                    transcript,
+                    embedding_scores,
+                    acoustic_features,
+                )
+            except Exception:
+                return self._infer_locally(
+                    transcript,
+                    embedding_scores,
+                    acoustic_features,
+                )
 
         return self._infer_locally(transcript, embedding_scores, acoustic_features)
 

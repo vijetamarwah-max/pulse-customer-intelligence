@@ -4,14 +4,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from behavioral_state_engine.agent import BehavioralStateEngine
 
 from .config import get_cors_origins
+from .demo_manual_event_stream import DEMO_MANUAL_EVENT_STREAM
 from .schemas import (
+    ActionCentreResponse,
     APIMessage,
     BehavioralStateRequest,
     DashboardData,
+    EnterpriseDataIngestionRequest,
+    EnterpriseDataIngestionResponse,
     LoginRequest,
     LoginResponse,
     ProfileResponse,
 )
+from .recommendation_service import RecommendationService
+from .workspace_store import WorkspaceStore
 
 
 app = FastAPI(
@@ -27,6 +33,9 @@ app.add_middleware(
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "X-Requested-With"],
 )
+
+workspace_store = WorkspaceStore()
+recommendation_service = RecommendationService()
 
 
 @app.get("/api/health", response_model=APIMessage)
@@ -52,6 +61,18 @@ def login(payload: LoginRequest):
 
 @app.get("/api/get-data", response_model=DashboardData)
 def get_data():
+    workspace = workspace_store.get()
+    if workspace:
+        computed = workspace["computed"]
+        return {
+            "metrics": computed["metrics"],
+            "evidence": computed["evidence"],
+            "journey_diagnostics": computed["journey_diagnostics"],
+            "user_decisions": computed["user_decisions"],
+            "data_mode": computed["data_mode"],
+            "connection_status": computed["connection_status"],
+        }
+
     return {
         "metrics": {
             "incremental_revenue": 418000,
@@ -115,6 +136,70 @@ def get_data():
                 },
             },
         ],
+        "data_mode": "demo",
+        "connection_status": {
+            "connected": False,
+            "source_name": None,
+            "users_ingested": 0,
+            "recommendations_ready": 0,
+            "message": "Connect enterprise events, communication history, and CRM context to generate live Action Centre recommendations.",
+        },
+    }
+
+
+@app.post(
+    "/api/enterprise-data",
+    response_model=EnterpriseDataIngestionResponse,
+)
+def ingest_enterprise_data(payload: EnterpriseDataIngestionRequest):
+    payload_dict = _dump_model(payload)
+    computed = recommendation_service.build_action_centre(payload_dict)
+    workspace_store.save(
+        workspace_id=payload.workspace_id,
+        payload=payload_dict,
+        computed=computed,
+    )
+
+    return {
+        "status": "ok",
+        "workspace_id": payload.workspace_id,
+        "source_name": payload.source_name,
+        "users_ingested": len(payload.users),
+        "action_centre_url": "/api/action-centre",
+    }
+
+
+@app.get("/api/demo/manual-event-stream")
+def demo_manual_event_stream():
+    return DEMO_MANUAL_EVENT_STREAM
+
+
+@app.post(
+    "/api/demo/run-manual-event-stream",
+    response_model=EnterpriseDataIngestionResponse,
+)
+def run_demo_manual_event_stream():
+    payload = EnterpriseDataIngestionRequest(**DEMO_MANUAL_EVENT_STREAM)
+    return ingest_enterprise_data(payload)
+
+
+@app.get("/api/action-centre", response_model=ActionCentreResponse)
+def action_centre(workspace_id: str = "default"):
+    workspace = workspace_store.get(workspace_id)
+    if not workspace:
+        raise HTTPException(
+            status_code=404,
+            detail="No enterprise data has been ingested for this workspace yet.",
+        )
+
+    computed = workspace["computed"]
+    return {
+        "workspace_id": computed["workspace_id"],
+        "data_mode": computed["data_mode"],
+        "connection_status": computed["connection_status"],
+        "recommendations": computed["recommendations"],
+        "metrics": computed["metrics"],
+        "processing_trace": computed["processing_trace"],
     }
 
 
