@@ -1,0 +1,62 @@
+[
+  {
+    "user_id": "U100",
+    "event_stream": [
+      {"event_name": "product_view", "timestamp": "2026-05-01T10:00:00Z"},
+      {"event_name": "add_to_cart", "timestamp": "2026-05-01T10:03:00Z"},
+      {"event_name": "cart_abandoned", "timestamp": "2026-05-01T10:20:00Z"}
+    ],
+    "communication_history": [
+      {"channel": "push", "message_type": "cart_reminder", "opened": false},
+      {"channel": "email", "message_type": "recommendation", "opened": true}
+    ],
+    "crm_context": {
+      "customer_tier": "gold",
+      "ltv_segment": "high_value"
+    },
+    "behavioral_state": {
+      "purchase_readiness": 0.82,
+      "communication_fatigue": 0.76,
+      "trust_level": 0.68,
+      "retention_risk": 0.63,
+      "engagement_probability": 0.55
+    },
+    "action": "suppress",
+    "outcome": {
+      "converted": true,
+      "revenue": 110,
+      "engagement": 0.2,
+      "retention": 0.8
+    },
+    "occurred_at": "2026-05-08T10:00:00Z"
+  },
+  {
+    "user_id": "U101",
+    "event_stream": [
+      {"event_name": "product_view", "timestamp": "2026-05-02T12:00:00Z"},
+      {"event_name": "checkout_started", "timestamp": "2026-05-02T12:08:00Z"}
+    ],
+    "communication_history": [
+      {"channel": "push", "message_type": "recommendation", "opened": true}
+    ],
+    "crm_context": {
+      "customer_tier": "silver",
+      "ltv_segment": "mid_value"
+    },
+    "behavioral_state": {
+      "purchase_readiness": 0.9,
+      "communication_fatigue": 0.1,
+      "trust_level": 0.8,
+      "retention_risk": 0.2,
+      "engagement_probability": 0.75
+    },
+    "action": "send_product_recommendation",
+    "outcome": {
+      "converted": true,
+      "revenue": 200,
+      "engagement": 0.7,
+      "retention": 0.45
+    },
+    "occurred_at": "2026-05-09T12:00:00Z"
+  }
+]

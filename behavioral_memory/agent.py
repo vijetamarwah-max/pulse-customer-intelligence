@@ -8,8 +8,9 @@ from .similarity_engine import SimilarityEngine
 
 
 class BehavioralMemoryOutcomeEstimator:
-    def __init__(self, top_k: int = 3) -> None:
+    def __init__(self, top_k: int = 3, vector_store=None) -> None:
         self.top_k = top_k
+        self.vector_store = vector_store
         self.memory = BehavioralMemoryStore()
         self.embedder = EmbeddingGenerator()
         self.similarity = SimilarityEngine()
@@ -22,12 +23,15 @@ class BehavioralMemoryOutcomeEstimator:
         historical_records: List[Dict[str, Any]],
     ) -> OutcomeEstimate:
         embedding = self.embedder.generate(state_vector)
-        neighbors = self.similarity.retrieve_similar(
-            current_embedding=embedding,
-            historical_records=historical_records,
-            embedder=self.embedder,
-            top_k=self.top_k,
-        )
+        if self.vector_store:
+            neighbors = self._retrieve_from_pgvector(embedding)
+        else:
+            neighbors = self.similarity.retrieve_similar(
+                current_embedding=embedding,
+                historical_records=historical_records,
+                embedder=self.embedder,
+                top_k=self.top_k,
+            )
 
         predicted_outcomes = self.estimator.estimate(neighbors)
         confidence = self._confidence(predicted_outcomes)
@@ -37,6 +41,20 @@ class BehavioralMemoryOutcomeEstimator:
             predicted_outcomes=predicted_outcomes,
             confidence=confidence,
         )
+
+    def _retrieve_from_pgvector(self, embedding):
+        matches = self.vector_store.search_similar(embedding=embedding, limit=self.top_k)
+        return [
+            (
+                match.similarity,
+                {
+                    "state_vector": match.state_vector,
+                    "action": match.action,
+                    **match.outcome,
+                },
+            )
+            for match in matches
+        ]
 
     def _confidence(self, predicted_outcomes: Dict[str, Dict[str, float]]) -> float:
         if not predicted_outcomes:

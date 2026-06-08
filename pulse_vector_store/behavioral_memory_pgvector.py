@@ -5,24 +5,23 @@ from typing import Dict, Iterable, List, Optional
 
 
 @dataclass
-class PGVectorRecord:
-    namespace: str
-    item_id: str
-    label: str
-    text: str
-    embedding: List[float]
-    similarity: Optional[float] = None
-    metadata: Optional[Dict] = None
+class BehavioralMemoryMatch:
+    memory_id: str
+    user_id: str
+    action: str
+    outcome: Dict
+    state_vector: Dict
+    similarity: float
 
 
-class PGVectorStore:
-    """pgvector-backed store for canonical behavior and communication patterns."""
+class BehavioralMemoryPGVectorStore:
+    """pgvector store for historical state/action/outcome memory."""
 
     def __init__(
         self,
         database_url: Optional[str] = None,
-        table_name: str = "pulse_embeddings",
-        dimension: int = 3,
+        table_name: str = "pulse_behavioral_memory",
+        dimension: int = 5,
         connect_timeout_seconds: int = 5,
     ) -> None:
         self.database_url = database_url or os.getenv("PULSE_DATABASE_URL")
@@ -31,7 +30,7 @@ class PGVectorStore:
         self.connect_timeout_seconds = connect_timeout_seconds
 
         if not self.database_url:
-            raise ValueError("PULSE_DATABASE_URL is required for PGVectorStore.")
+            raise ValueError("PULSE_DATABASE_URL is required for behavioral memory.")
 
     def initialize(self) -> None:
         with self._connect() as conn:
@@ -40,14 +39,15 @@ class PGVectorStore:
                 cur.execute(
                     f"""
                     CREATE TABLE IF NOT EXISTS {self.table_name} (
-                        namespace TEXT NOT NULL,
-                        item_id TEXT NOT NULL,
-                        label TEXT NOT NULL,
-                        text TEXT NOT NULL,
+                        memory_id TEXT PRIMARY KEY,
+                        user_id TEXT NOT NULL,
+                        action TEXT NOT NULL,
+                        state_vector JSONB NOT NULL,
+                        outcome JSONB NOT NULL,
                         metadata JSONB NOT NULL DEFAULT '{{}}'::jsonb,
                         embedding vector({self.dimension}) NOT NULL,
-                        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-                        PRIMARY KEY (namespace, item_id)
+                        occurred_at TIMESTAMPTZ,
+                        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
                     );
                     """
                 )
@@ -61,90 +61,103 @@ class PGVectorStore:
                 )
                 conn.commit()
 
-    def upsert_embedding(
+    def upsert_memory(
         self,
-        namespace: str,
-        item_id: str,
-        label: str,
-        text: str,
+        memory_id: str,
+        user_id: str,
+        action: str,
+        state_vector: Dict,
+        outcome: Dict,
         embedding: Iterable[float],
         metadata: Optional[Dict] = None,
+        occurred_at: Optional[str] = None,
     ) -> None:
-        embedding_literal = self._embedding_literal(embedding)
-
         with self._connect() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     f"""
                     INSERT INTO {self.table_name}
-                        (namespace, item_id, label, text, metadata, embedding)
-                    VALUES (%s, %s, %s, %s, %s::jsonb, %s::vector)
-                    ON CONFLICT (namespace, item_id)
+                        (
+                            memory_id,
+                            user_id,
+                            action,
+                            state_vector,
+                            outcome,
+                            metadata,
+                            embedding,
+                            occurred_at
+                        )
+                    VALUES (%s, %s, %s, %s::jsonb, %s::jsonb, %s::jsonb, %s::vector, %s)
+                    ON CONFLICT (memory_id)
                     DO UPDATE SET
-                        label = EXCLUDED.label,
-                        text = EXCLUDED.text,
+                        user_id = EXCLUDED.user_id,
+                        action = EXCLUDED.action,
+                        state_vector = EXCLUDED.state_vector,
+                        outcome = EXCLUDED.outcome,
                         metadata = EXCLUDED.metadata,
-                        embedding = EXCLUDED.embedding;
+                        embedding = EXCLUDED.embedding,
+                        occurred_at = EXCLUDED.occurred_at;
                     """,
                     (
-                        namespace,
-                        item_id,
-                        label,
-                        text,
+                        memory_id,
+                        user_id,
+                        action,
+                        json.dumps(state_vector),
+                        json.dumps(outcome),
                         json.dumps(metadata or {}),
-                        embedding_literal,
+                        self._embedding_literal(embedding),
+                        occurred_at,
                     ),
                 )
                 conn.commit()
 
     def search_similar(
         self,
-        namespace: str,
         embedding: Iterable[float],
-        limit: int = 5,
-    ) -> List[PGVectorRecord]:
+        limit: int = 20,
+        action: Optional[str] = None,
+    ) -> List[BehavioralMemoryMatch]:
         embedding_literal = self._embedding_literal(embedding)
+        action_filter = "AND action = %s" if action else ""
+        params = [embedding_literal, embedding_literal]
+        if action:
+            params.append(action)
+        params.append(limit)
 
         with self._connect() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     f"""
                     SELECT
-                        namespace,
-                        item_id,
-                        label,
-                        text,
-                        metadata,
-                        embedding::text,
+                        memory_id,
+                        user_id,
+                        action,
+                        state_vector,
+                        outcome,
                         1 - (embedding <=> %s::vector) AS similarity
                     FROM {self.table_name}
-                    WHERE namespace = %s
+                    WHERE 1 = 1
+                    {action_filter}
                     ORDER BY embedding <=> %s::vector
                     LIMIT %s;
                     """,
-                    (embedding_literal, namespace, embedding_literal, limit),
+                    params,
                 )
 
                 return [
-                    PGVectorRecord(
-                        namespace=row[0],
-                        item_id=row[1],
-                        label=row[2],
-                        text=row[3],
-                        metadata=row[4],
-                        embedding=self._parse_embedding(row[5]),
-                        similarity=float(row[6]),
+                    BehavioralMemoryMatch(
+                        memory_id=row[0],
+                        user_id=row[1],
+                        action=row[2],
+                        state_vector=row[3],
+                        outcome=row[4],
+                        similarity=float(row[5]),
                     )
                     for row in cur.fetchall()
                 ]
 
     def _connect(self):
-        try:
-            import psycopg
-        except ImportError as exc:
-            raise RuntimeError(
-                "psycopg is not installed. Run: python -m pip install -r requirements.txt"
-            ) from exc
+        import psycopg
 
         return psycopg.connect(
             self.database_url,
@@ -158,6 +171,3 @@ class PGVectorStore:
                 f"Expected embedding dimension {self.dimension}, got {len(values)}."
             )
         return "[" + ",".join(str(value) for value in values) + "]"
-
-    def _parse_embedding(self, embedding_text: str) -> List[float]:
-        return [float(value) for value in embedding_text.strip("[]").split(",")]

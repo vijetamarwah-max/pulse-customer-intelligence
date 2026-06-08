@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: pulse-ai-api
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: PULSE_CORS_ORIGINS
+        value: https://pulse-behavior-ai.lovable.app,https://id-preview--8ca02ac1-f8a8-4c13-ba27-d65509f12369.lovable.app
+      - key: NBA_LLM_MODEL
+        value: gpt-5-mini
+      - key: EVENT_TAXONOMY_MODEL
+        value: gpt-5.1
+      - key: EVENT_RUNTIME_FALLBACK_MODEL
+        value: gpt-5-mini
+      - key: VOC_REASONING_MODEL
+        value: gpt-5.1
+      - key: OPENAI_TRANSCRIPTION_MODEL
+        value: gpt-4o-transcribe
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: PULSE_DATABASE_URL
+        sync: false

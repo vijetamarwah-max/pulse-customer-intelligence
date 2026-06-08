@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pulse AI Decisioning Cockpit</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Primary">
+        <div class="brand">
+          <div class="brand-mark">P</div>
+          <div>
+            <div class="brand-name">Pulse AI</div>
+            <div class="brand-subtitle">Decisioning Layer</div>
+          </div>
+        </div>
+
+        <nav class="nav-list">
+          <button class="nav-item active" data-view="cockpit" title="Cockpit">
+            <span class="nav-icon">⌁</span>
+            <span>Cockpit</span>
+          </button>
+          <button class="nav-item" data-view="oversend" title="Over-send diagnosis">
+            <span class="nav-icon">≋</span>
+            <span>Over-send</span>
+          </button>
+          <button class="nav-item" data-view="suppression" title="Suppression economics">
+            <span class="nav-icon">⊘</span>
+            <span>Suppression</span>
+          </button>
+          <button class="nav-item" data-view="conflicts" title="Journey conflicts">
+            <span class="nav-icon">⇄</span>
+            <span>Conflicts</span>
+          </button>
+          <button class="nav-item" data-view="users" title="User decisions">
+            <span class="nav-icon">◉</span>
+            <span>Users</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="status-dot"></div>
+          <span>Braze connected</span>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Lifecycle P&L Workspace</p>
+            <h1 id="viewTitle">Decision Cockpit</h1>
+          </div>
+          <div class="topbar-actions">
+            <label class="field compact">
+              <span>Business goal</span>
+              <select id="goalSelect">
+                <option value="revenue">Maximize revenue</option>
+                <option value="retention">Increase retention</option>
+                <option value="roi">Improve budget ROI</option>
+              </select>
+            </label>
+            <label class="field compact">
+              <span>Budget window</span>
+              <select id="windowSelect">
+                <option value="7">Last 7 days</option>
+                <option value="30" selected>Last 30 days</option>
+                <option value="90">Last 90 days</option>
+              </select>
+            </label>
+          </div>
+        </header>
+
+        <section class="view active" id="cockpit">
+          <div class="metric-grid">
+            <article class="metric">
+              <span class="metric-label">Incremental revenue protected</span>
+              <strong id="incrementalRevenue">$418k</strong>
+              <small>+12.4% vs static journeys</small>
+            </article>
+            <article class="metric">
+              <span class="metric-label">Suppression safety</span>
+              <strong id="suppressionSafety">93%</strong>
+              <small>No revenue loss after holdout test</small>
+            </article>
+            <article class="metric warning">
+              <span class="metric-label">Budget leakage</span>
+              <strong id="budgetLeakage">$71k</strong>
+              <small>From low-value communication collisions</small>
+            </article>
+            <article class="metric">
+              <span class="metric-label">Comms reduction</span>
+              <strong id="commsReduction">22%</strong>
+              <small>While preserving conversion lift</small>
+            </article>
+          </div>
+
+          <div class="layout-two">
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2>Where P&L Is Moving</h2>
+                  <p>Decision evidence across revenue, fatigue, and suppression.</p>
+                </div>
+                <button class="icon-button" title="Refresh evidence">↻</button>
+              </div>
+              <div class="evidence-list" id="evidenceList"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2>Revenue vs Disturbance</h2>
+                  <p>Each segment is positioned by value and communication risk.</p>
+                </div>
+              </div>
+              <div class="quadrant" aria-label="Revenue versus disturbance chart">
+                <span class="axis y">Revenue upside</span>
+                <span class="axis x">Disturbance risk</span>
+                <button class="bubble b1" data-segment="ready">High intent</button>
+                <button class="bubble b2" data-segment="fatigue">High fatigue</button>
+                <button class="bubble b3" data-segment="trust">Low trust</button>
+                <button class="bubble b4" data-segment="nurture">Nurture</button>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="oversend">
+          <section class="panel full">
+            <div class="panel-header">
+              <div>
+                <h2>Onboarding Over-send Diagnosis</h2>
+                <p>Find the exact journey step that is burning attention without incremental value.</p>
+              </div>
+              <div class="segmented">
+                <button class="active">Food delivery</button>
+                <button>Insuretech</button>
+              </div>
+            </div>
+            <div class="journey-table" id="journeyTable"></div>
+          </section>
+        </section>
+
+        <section class="view" id="suppression">
+          <div class="layout-two">
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2>Suppression Economics</h2>
+                  <p>Estimate revenue risk before reducing low-value sends.</p>
+                </div>
+              </div>
+              <div class="slider-stack">
+                <label class="slider-row">
+                  <span>Suppress users above fatigue score</span>
+                  <strong id="fatigueValue">0.72</strong>
+                  <input id="fatigueSlider" type="range" min="45" max="90" value="72" />
+                </label>
+                <label class="slider-row">
+                  <span>Minimum predicted value per send</span>
+                  <strong id="valueValue">$0.18</strong>
+                  <input id="valueSlider" type="range" min="5" max="60" value="18" />
+                </label>
+              </div>
+              <div class="simulation-output" id="simulationOutput"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2>Holdout Evidence</h2>
+                  <p>Suppression decisions compared with control behavior.</p>
+                </div>
+              </div>
+              <div class="bar-list" id="holdoutBars"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="conflicts">
+          <section class="panel full">
+            <div class="panel-header">
+              <div>
+                <h2>Journey Collision Monitor</h2>
+                <p>Users targeted by multiple journeys where only one intervention should win.</p>
+              </div>
+            </div>
+            <div class="conflict-list" id="conflictList"></div>
+          </section>
+        </section>
+
+        <section class="view" id="users">
+          <div class="layout-two user-layout">
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2>User Intervention Queue</h2>
+                  <p>Review users where Pulse recommends silence or a non-obvious action.</p>
+                </div>
+              </div>
+              <div class="user-list" id="userList"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2 id="decisionTitle">Decision Evidence</h2>
+                  <p>Counterfactuals and rationale for the selected user.</p>
+                </div>
+              </div>
+              <div class="decision-detail" id="decisionDetail"></div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

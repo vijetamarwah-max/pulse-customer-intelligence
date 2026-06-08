@@ -45,6 +45,13 @@ Seed canonical Event and VoC templates with:
 python -m pulse_vector_store.seed_pgvector
 ```
 
+For real state/action/outcome training data, use `training_data_pipeline`:
+
+```bash
+python -m training_data_pipeline.examples.run_training_example
+python -m training_data_pipeline.examples.seed_pgvector_memory
+```
+
 ## Decisioning Flow
 
 The refined Pulse AI decisioning flow separates prediction from action choice:
@@ -121,6 +128,42 @@ Run it with:
 ```bash
 python -m intervention_outcome_tracker.examples.run_example
 ```
+
+## Frontend Prototype
+
+`pulse_frontend` is a static Lifecycle PM cockpit for diagnosing over-sending,
+suppression economics, journey collisions, and per-user next-best-action
+evidence.
+
+Open:
+
+```text
+pulse_frontend/index.html
+```
+
+## API Backend
+
+`pulse_api` exposes REST endpoints for the Lovable frontend:
+
+- `GET /api/health`
+- `POST /api/login`
+- `GET /api/profile`
+- `GET /api/get-data`
+- `POST /api/behavioral-state`
+
+Run locally with:
+
+```bash
+uvicorn pulse_api.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+CORS is enabled for the Lovable production URL and preview URL by default.
+Deployment files are included:
+
+- `Dockerfile`
+- `render.yaml`
+- `Procfile`
+- `pulse_api/DEPLOYMENT.md`
 
 ## Output Contract
 
