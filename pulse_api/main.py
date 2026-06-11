@@ -17,6 +17,10 @@ from .schemas import (
     ProfileResponse,
 )
 from .recommendation_service import RecommendationService
+from .test_data.ecommerce_comprehensive import COMPREHENSIVE_ECOMMERCE_TEST_PAYLOAD
+from .test_data.ecommerce_synthetic import ECOMMERCE_SYNTHETIC_TEST_PAYLOAD
+from .test_data.mixed_signal_scenarios import MIXED_SIGNAL_SCENARIO_PAYLOAD
+from .test_data.nba_conflict_scenarios import NBA_CONFLICT_SCENARIO_PAYLOAD
 from .workspace_store import WorkspaceStore
 
 
@@ -71,6 +75,7 @@ def get_data():
             "user_decisions": computed["user_decisions"],
             "data_mode": computed["data_mode"],
             "connection_status": computed["connection_status"],
+            "action_centre": computed["action_centre"],
         }
 
     return {
@@ -144,6 +149,7 @@ def get_data():
             "recommendations_ready": 0,
             "message": "Connect enterprise events, communication history, and CRM context to generate live Action Centre recommendations.",
         },
+        "action_centre": None,
     }
 
 
@@ -183,6 +189,62 @@ def run_demo_manual_event_stream():
     return ingest_enterprise_data(payload)
 
 
+@app.get("/api/test-data/ecommerce-scenarios")
+def ecommerce_scenarios():
+    return ECOMMERCE_SYNTHETIC_TEST_PAYLOAD
+
+
+@app.post(
+    "/api/test-data/run-ecommerce-scenarios",
+    response_model=EnterpriseDataIngestionResponse,
+)
+def run_ecommerce_scenarios():
+    payload = EnterpriseDataIngestionRequest(**ECOMMERCE_SYNTHETIC_TEST_PAYLOAD)
+    return ingest_enterprise_data(payload)
+
+
+@app.get("/api/test-data/ecommerce-comprehensive-scenarios")
+def ecommerce_comprehensive_scenarios():
+    return COMPREHENSIVE_ECOMMERCE_TEST_PAYLOAD
+
+
+@app.post(
+    "/api/test-data/run-ecommerce-comprehensive-scenarios",
+    response_model=EnterpriseDataIngestionResponse,
+)
+def run_ecommerce_comprehensive_scenarios():
+    payload = EnterpriseDataIngestionRequest(**COMPREHENSIVE_ECOMMERCE_TEST_PAYLOAD)
+    return ingest_enterprise_data(payload)
+
+
+@app.get("/api/test-data/nba-conflict-scenarios")
+def nba_conflict_scenarios():
+    return NBA_CONFLICT_SCENARIO_PAYLOAD
+
+
+@app.post(
+    "/api/test-data/run-nba-conflict-scenarios",
+    response_model=EnterpriseDataIngestionResponse,
+)
+def run_nba_conflict_scenarios():
+    payload = EnterpriseDataIngestionRequest(**NBA_CONFLICT_SCENARIO_PAYLOAD)
+    return ingest_enterprise_data(payload)
+
+
+@app.get("/api/test-data/mixed-signal-scenarios")
+def mixed_signal_scenarios():
+    return MIXED_SIGNAL_SCENARIO_PAYLOAD
+
+
+@app.post(
+    "/api/test-data/run-mixed-signal-scenarios",
+    response_model=EnterpriseDataIngestionResponse,
+)
+def run_mixed_signal_scenarios():
+    payload = EnterpriseDataIngestionRequest(**MIXED_SIGNAL_SCENARIO_PAYLOAD)
+    return ingest_enterprise_data(payload)
+
+
 @app.get("/api/action-centre", response_model=ActionCentreResponse)
 def action_centre(workspace_id: str = "default"):
     workspace = workspace_store.get(workspace_id)
@@ -200,6 +262,7 @@ def action_centre(workspace_id: str = "default"):
         "recommendations": computed["recommendations"],
         "metrics": computed["metrics"],
         "processing_trace": computed["processing_trace"],
+        "action_centre": computed["action_centre"],
     }
 
 

@@ -1,0 +1,76 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+5 0 obj
+<< /Length 4442 >>
+stream
+BT /F1 14 Tf 42 742 Td (Pulse AI Enterprise Training & Pilot Success One-Pager) Tj ET
+BT /F1 9.5 Tf 42 727 Td (What Pulse AI Does) Tj ET
+BT /F1 7.3 Tf 42 715 Td (Pulse AI is a decisioning layer for lifecycle, CRM, growth, and retention teams using tools such as) Tj ET
+BT /F1 7.3 Tf 42 706 Td (Braze, MoEngage, WebEngage, push, email, WhatsApp, SMS, or in-app messaging.) Tj ET
+BT /F1 7.3 Tf 42 694 Td (It answers: What is the best action to take for this customer right now, considering revenue, fatigue,) Tj ET
+BT /F1 7.3 Tf 42 685 Td (trust, intent, and business rules?) Tj ET
+BT /F1 7.3 Tf 42 673 Td (Pulse does not replace the campaign platform. It decides whether to send, suppress, recover trust,) Tj ET
+BT /F1 7.3 Tf 42 664 Td (choose a channel, pick a send window, and explain the recommendation.) Tj ET
+BT /F1 9.5 Tf 42 649 Td (What Users See In The Action Centre) Tj ET
+BT /F1 7.3 Tf 42 637 Td (Each recommendation includes action, channel, send window, confidence, auto-approval status, expected) Tj ET
+BT /F1 7.3 Tf 42 628 Td (value per communication, explanation, top signals, and alternatives ruled out.) Tj ET
+BT /F1 7.3 Tf 42 616 Td (Confidence workflow: >80% auto-approval eligible; 60-80% observe or manually approve; <60% reject or) Tj ET
+BT /F1 7.3 Tf 42 607 Td (keep out of execution.) Tj ET
+BT /F1 7.3 Tf 42 595 Td (Example: Riya Sharma has high intent and low fatigue. Pulse recommends a wishlist nudge by push at) Tj ET
+BT /F1 7.3 Tf 42 586 Td (7:40 PM with 92% confidence, Rs 312 expected value, and an explanation based on product interest, low) Tj ET
+BT /F1 7.3 Tf 42 577 Td (fatigue, and push responsiveness.) Tj ET
+BT /F1 9.5 Tf 42 562 Td (What To Expect In The First Two Weeks) Tj ET
+BT /F1 7.3 Tf 42 550 Td (The first two weeks should prove decision quality, not full autonomous optimization.) Tj ET
+BT /F1 7.3 Tf 42 538 Td (Expected outputs: connected sample event, CRM, and communication data; mapped event taxonomy;) Tj ET
+BT /F1 7.3 Tf 42 529 Td (behavioral states for a pilot cohort; Action Centre recommendations; suppression, service recovery,) Tj ET
+BT /F1 7.3 Tf 42 520 Td (channel, timing, and content decisions; first readout against a control group or historical baseline.) Tj ET
+BT /F1 7.3 Tf 42 508 Td (Recommended pilot scope: 1 lifecycle journey or product area; 5,000 to 50,000 users if available; 2 to) Tj ET
+BT /F1 7.3 Tf 42 499 Td (4 channels; 3 to 5 intervention types; 1 primary goal such as conversion, revenue, retention, or) Tj ET
+BT /F1 7.3 Tf 42 490 Td (fatigue reduction.) Tj ET
+BT /F1 9.5 Tf 42 475 Td (North Star Business Metrics) Tj ET
+BT /F1 7.3 Tf 42 463 Td (These business outcomes should be measured after the pilot is cleared and a one-month measurement) Tj ET
+BT /F1 7.3 Tf 42 454 Td (window is available.) Tj ET
+BT /F1 7.3 Tf 42 442 Td (- Incremental conversion or revenue lift: measure lift versus holdout or historical baseline. Expected) Tj ET
+BT /F1 7.3 Tf 42 433 Td (direction: positive lift.) Tj ET
+BT /F1 7.3 Tf 42 421 Td (- Reduced marketing spend: measure lower sends, fewer low-value touches, and better channel mix.) Tj ET
+BT /F1 7.3 Tf 42 412 Td (Expected direction: lower spend per conversion.) Tj ET
+BT /F1 9.5 Tf 42 397 Td (MVP Quality Metrics) Tj ET
+BT /F1 7.3 Tf 42 385 Td (- Recommendation action alignment on golden suite: target >85%.) Tj ET
+BT /F1 7.3 Tf 42 373 Td (- Hard rule violation rate: target 0%.) Tj ET
+BT /F1 7.3 Tf 42 361 Td (- Suppression/service-recovery recall: target >75%.) Tj ET
+BT /F1 7.3 Tf 42 349 Td (- Auto-approve precision: target >85% once outcome labels exist.) Tj ET
+BT /F1 7.3 Tf 42 337 Td (- Notification reduction in eligible journeys: target 10-20%.) Tj ET
+BT /F1 9.5 Tf 42 322 Td (Pilot Readout Questions) Tj ET
+BT /F1 7.3 Tf 42 310 Td (- Which users did Pulse suppress that static journeys would have messaged?) Tj ET
+BT /F1 7.3 Tf 42 298 Td (- Which high-intent users received a better channel or time recommendation?) Tj ET
+BT /F1 7.3 Tf 42 286 Td (- Which users needed service recovery before marketing?) Tj ET
+BT /F1 7.3 Tf 42 274 Td (- Which recommendations had high expected value but low confidence?) Tj ET
+BT /F1 7.3 Tf 42 262 Td (- Which custom rules were triggered most often?) Tj ET
+BT /F1 7.3 Tf 42 250 Td (Do not overclaim long-term LTV, unsubscribe reduction, or revenue lift in two weeks unless the pilot) Tj ET
+BT /F1 7.3 Tf 42 241 Td (has a clean holdout group and enough post-send outcome data.) Tj ET
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000000311 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+4805
+%%EOF

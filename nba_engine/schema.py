@@ -10,5 +10,6 @@ class NBARecommendation(BaseModel):
     expected_incremental_value: float
     ranked_actions: Dict[str, float]
     counterfactuals: Dict[str, float]
+    delivery_plan: Dict[str, object] = {}
     reasoning: List[str]
     llm_reasoning: str

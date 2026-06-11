@@ -8,14 +8,17 @@ from event_understanding_agent.agent import EventUnderstandingAgent
 from nba_engine.agent import NBADecisionEngine
 from voice_of_customer_agent.agent import VoiceOfCustomerAgent
 
+from .action_centre_formatter import ActionCentreFormatter
+
 
 class RecommendationService:
     def __init__(self) -> None:
         self.event_agent = EventUnderstandingAgent()
         self.voc_agent = VoiceOfCustomerAgent()
         self.state_engine = BehavioralStateEngine()
-        self.outcome_estimator = BehavioralMemoryOutcomeEstimator(top_k=3)
+        self.outcome_estimator = BehavioralMemoryOutcomeEstimator(top_k=8)
         self.nba_engine = NBADecisionEngine()
+        self.formatter = ActionCentreFormatter()
 
     def build_action_centre(self, payload: Dict) -> Dict:
         historical_outcomes = payload.get("historical_outcomes") or self._default_history()
@@ -46,6 +49,7 @@ class RecommendationService:
             "user_decisions": [
                 {
                     "user_id": item["user_id"],
+                    "scenario": item.get("scenario"),
                     "state_label": item["behavioral_state"]["state_label"],
                     "recommended_action": item["recommended_action"],
                     "confidence": item["confidence"],
@@ -53,6 +57,7 @@ class RecommendationService:
                 }
                 for item in recommendations
             ],
+            "action_centre": self.formatter.build(recommendations),
         }
 
     def _recommend_for_user(
@@ -74,6 +79,7 @@ class RecommendationService:
                 "purchase_intent": event_result.purchase_intent,
                 "exploration_intent": event_result.exploration_intent,
                 "churn_risk": event_result.churn_risk,
+                **self._event_subsignals(user),
             },
             "behavioral_tags": event_result.behavioral_tags,
             "confidence": event_result.confidence,
@@ -87,9 +93,25 @@ class RecommendationService:
             "confidence": voc_result.confidence,
         }
 
+        crm_context = {
+            **user.get("crm_context", {}),
+            **{
+                key: value
+                for key, value in user.get("user_state", {}).items()
+                if key
+                in {
+                    "messages_7d",
+                    "recent_complaint",
+                    "inactive_days",
+                    "events_7d",
+                    "support_ticket_open_days",
+                    "ignored_comms_days",
+                }
+            },
+        }
         crm_input = {
             "user_id": user_id,
-            "crm_context": user.get("crm_context", {}),
+            "crm_context": crm_context,
         }
 
         behavioral_state = self.state_engine.run(event_input, voc_input, crm_input)
@@ -107,19 +129,25 @@ class RecommendationService:
             behavioral_state=state_vector,
             predicted_outcomes=outcome_dict["predicted_outcomes"],
             goal=goal,
-            constraints=constraints,
+            constraints=self._constraints_for_user(constraints, user),
             behavioral_confidence=behavioral_state_dict["confidence"],
             outcome_confidence=outcome_dict["confidence"],
+            user_context={
+                "crm_context": user.get("crm_context", {}),
+                "user_state": user.get("user_state", {}),
+            },
         )
         nba_dict = self._dump(nba)
 
         return {
             "user_id": user_id,
+            "scenario": user.get("scenario"),
             "recommended_action": nba_dict["recommended_action"],
             "confidence": nba_dict["confidence"],
             "expected_incremental_value": nba_dict["expected_incremental_value"],
             "ranked_actions": nba_dict["ranked_actions"],
             "counterfactuals": nba_dict["counterfactuals"],
+            "delivery_plan": nba_dict["delivery_plan"],
             "reasoning": nba_dict["reasoning"],
             "llm_reasoning": nba_dict["llm_reasoning"],
             "behavioral_state": behavioral_state_dict,
@@ -161,6 +189,64 @@ class RecommendationService:
                 messages.append(f"{channel}: {text}")
 
         return "\n".join(messages)
+
+    def _event_subsignals(self, user: Dict) -> Dict[str, float]:
+        raw_events = user.get("events", {}).get("raw_events", [])
+        lowered = [str(event).lower() for event in raw_events]
+        total = max(len(lowered), 1)
+
+        cart_events = sum(
+            1
+            for event in lowered
+            if "cart" in event or event in {"product added", "add_to_cart"}
+        )
+        checkout_events = sum(
+            1
+            for event in lowered
+            if "checkout" in event or "payment info" in event
+        )
+        wishlist_events = sum(1 for event in lowered if "wishlist" in event)
+        browse_events = sum(
+            1
+            for event in lowered
+            if any(token in event for token in ["viewed", "searched", "filtered", "clicked"])
+        )
+        coupon_events = sum(1 for event in lowered if "coupon" in event or "discount" in event)
+        conversion_events = sum(
+            1
+            for event in lowered
+            if any(token in event for token in ["order completed", "purchase", "product reviewed"])
+        )
+
+        comms_text = self._comms_to_text(user.get("comms_history", [])).lower()
+        crm_context = user.get("crm_context", {})
+        service_blocker = any(
+            token in comms_text
+            for token in [
+                "payment failed",
+                "failed twice",
+                "unresolved",
+                "damaged",
+                "refund",
+                "claim",
+                "support ticket",
+            ]
+        ) or crm_context.get("lifecycle_stage") in {
+            "checkout_blocked",
+            "service_recovery",
+            "trust_recovery",
+            "support_open",
+        }
+
+        return {
+            "cart_intensity": round(min(cart_events / 4, 1.0), 3),
+            "checkout_intensity": round(min(checkout_events / 3, 1.0), 3),
+            "wishlist_intensity": round(min(wishlist_events / 2, 1.0), 3),
+            "browse_intensity": round(min(browse_events / total, 1.0), 3),
+            "coupon_intensity": round(min(coupon_events / 2, 1.0), 3),
+            "recent_conversion_signal": round(min(conversion_events, 1.0), 3),
+            "service_blocker_intensity": 1.0 if service_blocker else 0.0,
+        }
 
     def _connection_status(self, payload: Dict, recommendations: List[Dict]) -> Dict:
         return {
@@ -319,6 +405,7 @@ class RecommendationService:
                             "expected_incremental_value"
                         ],
                         "counterfactuals": nba_dict["counterfactuals"],
+                        "delivery_plan": nba_dict["delivery_plan"],
                         "llm_reasoning": nba_dict["llm_reasoning"],
                     },
                 },
@@ -330,6 +417,20 @@ class RecommendationService:
             "discounts_allowed": False,
             "send_allowed": True,
             "suppress_if_high_fatigue": False,
+        }
+
+    def _constraints_for_user(self, global_constraints: Dict, user: Dict) -> Dict:
+        user_state = user.get("user_state", {})
+        crm_context = user.get("crm_context", {})
+        return {
+            **global_constraints,
+            **user.get("constraints", {}),
+            "support_status": crm_context.get("support_status"),
+            "support_ticket_open_days": user_state.get("support_ticket_open_days")
+            or crm_context.get("support_ticket_open_days"),
+            "recent_complaint": user_state.get("recent_complaint"),
+            "messages_7d": user_state.get("messages_7d"),
+            "preferred_channel": crm_context.get("preferred_channel"),
         }
 
     def _default_history(self) -> List[Dict]:

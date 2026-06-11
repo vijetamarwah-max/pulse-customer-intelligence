@@ -28,7 +28,10 @@ class LLMReasoning:
         embedding_scores: Dict[str, float],
     ) -> Dict[str, Any]:
         if self._should_call_openai(event_stream, embedding_scores):
-            return self._infer_with_openai(event_stream, embedding_scores)
+            try:
+                return self._infer_with_openai(event_stream, embedding_scores)
+            except Exception:
+                return self._infer_locally(event_stream, embedding_scores)
 
         return self._infer_locally(event_stream, embedding_scores)
 
@@ -127,6 +130,9 @@ class LLMReasoning:
         event_stream: Dict[str, Any],
         embedding_scores: Dict[str, float],
     ) -> bool:
+        if os.getenv("PULSE_DISABLE_RUNTIME_LLM", "").lower() == "true":
+            return False
+
         if event_stream.get("force_llm_reasoning", False):
             return bool(self._usable_api_key())
 

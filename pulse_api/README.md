@@ -47,6 +47,10 @@ python -m pulse_api.enterprise_smoke_test
 - `GET /api/action-centre`
 - `GET /api/demo/manual-event-stream`
 - `POST /api/demo/run-manual-event-stream`
+- `GET /api/test-data/ecommerce-scenarios`
+- `POST /api/test-data/run-ecommerce-scenarios`
+- `GET /api/test-data/ecommerce-comprehensive-scenarios`
+- `POST /api/test-data/run-ecommerce-comprehensive-scenarios`
 
 ## Enterprise Data Flow
 
@@ -167,3 +171,99 @@ The response includes `processing_trace`, where each user has these steps:
 
 Render this trace next to each recommendation to show how Pulse moves from
 manual events to Action Centre decisions.
+
+## Synthetic E-Commerce Evaluation Corpus
+
+Use this when testing Pulse quality without real enterprise data.
+
+Fetch 12 synthetic users with Segment-style e-commerce events, communication
+history, CRM profiles, and user state:
+
+```text
+GET /api/test-data/ecommerce-scenarios
+```
+
+Run the full corpus through Pulse:
+
+```text
+POST /api/test-data/run-ecommerce-scenarios
+```
+
+Inspect recommendations:
+
+```text
+GET /api/action-centre?workspace_id=ecommerce_synthetic_eval
+```
+
+Local test:
+
+```bash
+python -m pulse_api.ecommerce_synthetic_smoke_test
+python -m pulse_api.ecommerce_comprehensive_smoke_test
+```
+
+For deeper product review, use:
+
+```text
+GET /api/test-data/ecommerce-comprehensive-scenarios
+```
+
+This returns 30 labelled e-commerce users. Each user has a long unique Segment-style event stream, rich CRM state, user state, and synthetic voice/chat/email/WhatsApp logs with timestamps and metadata.
+
+## Configurable NBA Rules
+
+Tenant and user constraints can be passed in the request payload. The examples
+below are configuration, not hardcoded product behavior.
+
+```json
+{
+  "constraints": {
+    "quiet_hours": {"start": "21:00", "end": "09:00"},
+    "allowed_channels": ["push", "email"],
+    "blocked_channels": ["whatsapp"],
+    "custom_rules": [
+      {
+        "id": "support_ticket_dnd",
+        "when": {
+          "all": [
+            {"field": "support_status", "op": "in", "value": ["open_ticket", "escalated_ticket"]},
+            {"field": "support_ticket_open_days", "op": ">=", "value": 14}
+          ]
+        },
+        "actions": [
+          {"type": "force_action", "value": "suppress"},
+          {"type": "add_reason", "value": "custom_rule_support_ticket_open_14_days"}
+        ]
+      }
+    ]
+  }
+}
+```
+
+Supported condition operators:
+
+- `==`
+- `!=`
+- `>`
+- `>=`
+- `<`
+- `<=`
+- `in`
+- `not_in`
+- `truthy`
+- `falsy`
+
+Supported rule actions:
+
+- `force_action`
+- `add_reason`
+- `set`
+- `block_channel`
+- `allow_channels`
+- `prefer_channel`
+- `suppress_action`
+
+Rules can evaluate request-level/user-level fields such as
+`support_status`, `support_ticket_open_days`, `messages_7d`, and
+`recent_complaint`, plus state fields using the `state.` prefix, for example
+`state.communication_fatigue`.

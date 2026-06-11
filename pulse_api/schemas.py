@@ -21,6 +21,7 @@ class DashboardData(BaseModel):
     user_decisions: List[Dict[str, object]]
     data_mode: str = "demo"
     connection_status: Optional[Dict[str, object]] = None
+    action_centre: Optional[Dict[str, object]] = None
 
 
 class ProfileResponse(BaseModel):
@@ -37,10 +38,12 @@ class BehavioralStateRequest(BaseModel):
 
 class EnterpriseUserRecord(BaseModel):
     user_id: str
+    scenario: Optional[str] = None
     events: Dict[str, object]
     comms_history: List[Dict[str, object]] = Field(default_factory=list)
     crm_context: Dict[str, object] = Field(default_factory=dict)
     user_state: Dict[str, object] = Field(default_factory=dict)
+    constraints: Dict[str, object] = Field(default_factory=dict)
 
 
 class EnterpriseDataIngestionRequest(BaseModel):
@@ -67,6 +70,7 @@ class ActionCentreResponse(BaseModel):
     recommendations: List[Dict[str, object]]
     metrics: Dict[str, object]
     processing_trace: List[Dict[str, object]] = Field(default_factory=list)
+    action_centre: Dict[str, object] = Field(default_factory=dict)
 
 
 class APIMessage(BaseModel):

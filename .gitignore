@@ -5,3 +5,4 @@ venv/
 .env
 *.m4a
 *.mp3
+pulse_api/generated_outputs/

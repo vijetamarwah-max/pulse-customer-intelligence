@@ -34,6 +34,15 @@ class BehavioralScoringModels:
             "discount_sensitivity": state["discount_sensitivity"],
             "brand_affinity": state["brand_affinity"],
             "intervention_receptiveness": state["intervention_receptiveness"],
+            "complaint_retention_risk": state.get("complaint_retention_risk", 0.0),
+            "inactivity_retention_risk": state.get("inactivity_retention_risk", 0.0),
+            "cart_intensity": state.get("cart_intensity", 0.0),
+            "checkout_intensity": state.get("checkout_intensity", 0.0),
+            "wishlist_intensity": state.get("wishlist_intensity", 0.0),
+            "browse_intensity": state.get("browse_intensity", 0.0),
+            "coupon_intensity": state.get("coupon_intensity", 0.0),
+            "recent_conversion_signal": state.get("recent_conversion_signal", 0.0),
+            "service_blocker_intensity": state.get("service_blocker_intensity", 0.0),
         }
 
     def _bounded(self, value: float) -> float:

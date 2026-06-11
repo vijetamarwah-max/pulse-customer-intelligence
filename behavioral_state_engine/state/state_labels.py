@@ -3,6 +3,14 @@ from typing import Dict
 
 class StateLabeler:
     def label(self, state: Dict[str, float]) -> str:
+        if state.get("complaint_retention_risk", 0.0) > 0.75:
+            if state["communication_fatigue"] > 0.6 or state["trust_level"] < 0.45:
+                return "complaint_led_retention_risk"
+            return "trust_recovery_needed"
+
+        if state.get("inactivity_retention_risk", 0.0) > 0.75:
+            return "inactivity_led_retention_risk"
+
         if (
             state["purchase_readiness"] > 0.7
             and state["communication_fatigue"] > 0.6

@@ -23,6 +23,14 @@ class LLMReasoningBuilder:
         counterfactuals,
         goal,
     ):
+        if os.getenv("PULSE_DISABLE_RUNTIME_LLM", "").lower() == "true":
+            return self._fallback_reasoning(
+                selected_action,
+                behavioral_state,
+                ranked_actions,
+                goal,
+            )
+
         if not os.getenv("OPENAI_API_KEY"):
             return self._fallback_reasoning(
                 selected_action,

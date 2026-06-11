@@ -23,6 +23,9 @@ class VOCLLMReasoner:
         embedding_scores: Dict[str, float],
         acoustic_features: Dict[str, object],
     ) -> Dict[str, object]:
+        if os.getenv("PULSE_DISABLE_RUNTIME_LLM", "").lower() == "true":
+            return self._infer_locally(transcript, embedding_scores, acoustic_features)
+
         if self._usable_api_key():
             try:
                 return self._infer_with_openai(

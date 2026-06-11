@@ -7,4 +7,5 @@ class CandidateGenerator:
             "send_cart_reminder",
             "send_retention_message",
             "send_discount_offer",
+            "service_recovery",
         ]
