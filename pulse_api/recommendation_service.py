@@ -142,6 +142,13 @@ class RecommendationService:
         return {
             "user_id": user_id,
             "scenario": user.get("scenario"),
+            "source_data": {
+                "raw_events": user.get("events", {}).get("raw_events", []),
+                "event_stream": user.get("events", {}).get("event_stream", []),
+                "comms_history": user.get("comms_history", []),
+                "crm_context": user.get("crm_context", {}),
+                "user_state": user.get("user_state", {}),
+            },
             "recommended_action": nba_dict["recommended_action"],
             "confidence": nba_dict["confidence"],
             "expected_incremental_value": nba_dict["expected_incremental_value"],
@@ -350,6 +357,7 @@ class RecommendationService:
         nba_dict: Dict,
     ) -> Dict:
         raw_events = user.get("events", {}).get("raw_events", [])
+        event_stream = user.get("events", {}).get("event_stream", [])
         comms_history = user.get("comms_history", [])
 
         return {
@@ -361,6 +369,7 @@ class RecommendationService:
                     "summary": f"{len(raw_events)} raw events received from manual demo upload.",
                     "data": {
                         "raw_events": raw_events,
+                        "event_stream": event_stream,
                         "user_state": user.get("user_state", {}),
                     },
                 },

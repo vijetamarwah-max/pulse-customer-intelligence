@@ -39,6 +39,7 @@ class ActionCentreFormatter:
         return {
             "user_id": item["user_id"],
             "scenario": item.get("scenario"),
+            "source_data": item.get("source_data", {}),
             "behavioral_profile": {
                 "state_label": item["behavioral_state"]["state_label"],
                 "signals": {
@@ -69,6 +70,10 @@ class ActionCentreFormatter:
                 "conflict_resolution": delivery_plan.get("conflict_resolution", []),
             },
             "why_this_action": self._why_this_action(item),
+            "recent_activity": self._recent_activity(item),
+            "event_stream": item.get("source_data", {}).get("event_stream", []),
+            "communication_history": item.get("source_data", {}).get("comms_history", []),
+            "crm_context": item.get("source_data", {}).get("crm_context", {}),
             "top_behavioral_signals": self._top_behavioral_signals(item),
             "alternatives_ruled_out": self._alternatives(item),
             "similar_users": self._similar_users(item),
@@ -153,6 +158,58 @@ class ActionCentreFormatter:
 
     def _signal_description(self, label, value):
         return f"{round(value * 100)} signal strength"
+
+    def _recent_activity(self, item):
+        source_data = item.get("source_data", {})
+        event_stream = source_data.get("event_stream", [])
+        activity = []
+
+        for event in event_stream[-6:]:
+            activity.append(
+                {
+                    "type": "event",
+                    "label": event.get("event_name"),
+                    "timestamp": event.get("timestamp"),
+                    "channel": event.get("channel"),
+                    "description": self._event_description(event),
+                    "metadata": {
+                        "source": event.get("source"),
+                        "device": event.get("device"),
+                        "properties": event.get("properties", {}),
+                    },
+                }
+            )
+
+        for comm in source_data.get("comms_history", [])[-3:]:
+            activity.append(
+                {
+                    "type": "communication",
+                    "label": f"{comm.get('channel', 'communication')} message",
+                    "timestamp": comm.get("sent_at"),
+                    "channel": comm.get("channel"),
+                    "description": comm.get("message"),
+                    "metadata": {
+                        "direction": comm.get("direction"),
+                        "sentiment_hint": comm.get("sentiment_hint"),
+                    },
+                }
+            )
+
+        return sorted(
+            activity,
+            key=lambda row: row.get("timestamp") or "",
+            reverse=True,
+        )[:8]
+
+    def _event_description(self, event):
+        properties = event.get("properties", {})
+        product = properties.get("product_name")
+        category = properties.get("category")
+        if product and category:
+            return f"{event.get('event_name')} - {product} ({category})"
+        if product:
+            return f"{event.get('event_name')} - {product}"
+        return event.get("event_name")
 
     def _alternatives(self, item):
         selected = item["recommended_action"]
