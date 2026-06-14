@@ -198,8 +198,20 @@ def demo_enterprise_upload_sample():
     "/api/demo/run-manual-event-stream",
     response_model=EnterpriseDataIngestionResponse,
 )
-def run_demo_manual_event_stream():
-    payload = EnterpriseDataIngestionRequest(**DEMO_MANUAL_EVENT_STREAM)
+def run_demo_manual_event_stream(payload: Dict[str, Any] | None = None):
+    if payload and payload.get("users"):
+        payload = _normalize_enterprise_payload(
+            {
+                "workspace_id": payload.get("workspace_id", "default"),
+                "source_name": payload.get("source_name", "manual_demo_event_stream"),
+                "business_goal": payload.get("business_goal", "increase_revenue"),
+                "constraints": payload.get("constraints", {}),
+                "users": payload["users"],
+                "historical_outcomes": payload.get("historical_outcomes"),
+            }
+        )
+    else:
+        payload = EnterpriseDataIngestionRequest(**DEMO_MANUAL_EVENT_STREAM)
     return _ingest_enterprise_payload(payload)
 
 
@@ -214,6 +226,20 @@ def ecommerce_scenarios():
 )
 def run_ecommerce_scenarios():
     payload = EnterpriseDataIngestionRequest(**ECOMMERCE_SYNTHETIC_TEST_PAYLOAD)
+    return _ingest_enterprise_payload(payload)
+
+
+@app.get("/api/test-data/lifecycle")
+def lifecycle_scenarios():
+    return DEMO_MANUAL_EVENT_STREAM
+
+
+@app.post(
+    "/api/test-data/run-lifecycle",
+    response_model=EnterpriseDataIngestionResponse,
+)
+def run_lifecycle_scenarios():
+    payload = EnterpriseDataIngestionRequest(**DEMO_MANUAL_EVENT_STREAM)
     return _ingest_enterprise_payload(payload)
 
 

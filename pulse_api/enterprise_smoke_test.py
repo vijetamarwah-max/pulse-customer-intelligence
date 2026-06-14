@@ -8,6 +8,12 @@ def main() -> None:
 
     demo_payload = client.get("/api/demo/manual-event-stream")
     ingest = client.post("/api/demo/run-manual-event-stream")
+    edited_ingest = client.post(
+        "/api/demo/run-manual-event-stream",
+        json={"users": demo_payload.json()["users"]},
+    )
+    lifecycle_payload = client.get("/api/test-data/lifecycle")
+    lifecycle_ingest = client.post("/api/test-data/run-lifecycle")
     action_centre = client.get("/api/action-centre")
     dashboard = client.get("/api/get-data")
 
@@ -15,6 +21,9 @@ def main() -> None:
         {
             "demo_payload": demo_payload.status_code,
             "ingest": ingest.status_code,
+            "edited_ingest": edited_ingest.status_code,
+            "lifecycle_payload": lifecycle_payload.status_code,
+            "lifecycle_ingest": lifecycle_ingest.status_code,
             "action_centre": action_centre.status_code,
             "get_data": dashboard.status_code,
             "data_mode": dashboard.json().get("data_mode"),
