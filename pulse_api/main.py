@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -158,7 +160,11 @@ def get_data():
     "/api/enterprise-data",
     response_model=EnterpriseDataIngestionResponse,
 )
-def ingest_enterprise_data(payload: EnterpriseDataIngestionRequest):
+def ingest_enterprise_data(payload: Dict[str, Any]):
+    return _ingest_enterprise_payload(_normalize_enterprise_payload(payload))
+
+
+def _ingest_enterprise_payload(payload: EnterpriseDataIngestionRequest):
     payload_dict = _dump_model(payload)
     computed = recommendation_service.build_action_centre(payload_dict)
     workspace_store.save(
@@ -187,7 +193,7 @@ def demo_manual_event_stream():
 )
 def run_demo_manual_event_stream():
     payload = EnterpriseDataIngestionRequest(**DEMO_MANUAL_EVENT_STREAM)
-    return ingest_enterprise_data(payload)
+    return _ingest_enterprise_payload(payload)
 
 
 @app.get("/api/test-data/ecommerce-scenarios")
@@ -201,7 +207,7 @@ def ecommerce_scenarios():
 )
 def run_ecommerce_scenarios():
     payload = EnterpriseDataIngestionRequest(**ECOMMERCE_SYNTHETIC_TEST_PAYLOAD)
-    return ingest_enterprise_data(payload)
+    return _ingest_enterprise_payload(payload)
 
 
 @app.get("/api/test-data/ecommerce-comprehensive-scenarios")
@@ -215,7 +221,7 @@ def ecommerce_comprehensive_scenarios():
 )
 def run_ecommerce_comprehensive_scenarios():
     payload = EnterpriseDataIngestionRequest(**COMPREHENSIVE_ECOMMERCE_TEST_PAYLOAD)
-    return ingest_enterprise_data(payload)
+    return _ingest_enterprise_payload(payload)
 
 
 @app.get("/api/test-data/nba-conflict-scenarios")
@@ -229,7 +235,7 @@ def nba_conflict_scenarios():
 )
 def run_nba_conflict_scenarios():
     payload = EnterpriseDataIngestionRequest(**NBA_CONFLICT_SCENARIO_PAYLOAD)
-    return ingest_enterprise_data(payload)
+    return _ingest_enterprise_payload(payload)
 
 
 @app.get("/api/test-data/mixed-signal-scenarios")
@@ -243,7 +249,7 @@ def mixed_signal_scenarios():
 )
 def run_mixed_signal_scenarios():
     payload = EnterpriseDataIngestionRequest(**MIXED_SIGNAL_SCENARIO_PAYLOAD)
-    return ingest_enterprise_data(payload)
+    return _ingest_enterprise_payload(payload)
 
 
 @app.get("/api/action-centre", response_model=ActionCentreResponse)
@@ -301,6 +307,159 @@ def behavioral_state(payload: BehavioralStateRequest):
             crm_input=payload.crm_input,
         )
     )
+
+
+def _normalize_enterprise_payload(payload: Dict[str, Any]) -> EnterpriseDataIngestionRequest:
+    """Accept Pulse-native payloads and Lovable/manual upload payloads.
+
+    Pulse-native shape:
+    {"workspace_id": "...", "source_name": "...", "users": [...]}
+
+    Lovable upload shape seen in production:
+    {"workspace": "...", "source": "...", "data": {"workspace": "...", "users": [...]}}
+    """
+    if "users" in payload:
+        return EnterpriseDataIngestionRequest(**payload)
+
+    nested_data = payload.get("data") or {}
+    nested_users = nested_data.get("users") or []
+    normalized_users = [_normalize_user_record(user) for user in nested_users]
+    workspace_name = (
+        payload.get("workspace_id")
+        or payload.get("workspace")
+        or nested_data.get("workspace")
+        or "default"
+    )
+
+    normalized = {
+        "workspace_id": _workspace_id(workspace_name),
+        "source_name": payload.get("source_name") or payload.get("source") or "manual_upload",
+        "business_goal": payload.get("business_goal") or nested_data.get("business_goal") or "increase_revenue",
+        "constraints": payload.get("constraints") or nested_data.get("constraints") or {},
+        "users": normalized_users,
+        "historical_outcomes": payload.get("historical_outcomes") or nested_data.get("historical_outcomes"),
+    }
+    return EnterpriseDataIngestionRequest(**normalized)
+
+
+def _normalize_user_record(user: Dict[str, Any]) -> Dict[str, Any]:
+    traits = user.get("traits") or user.get("crm_context") or {}
+    events = user.get("events") or {}
+    comms = user.get("comms") or user.get("comms_history") or []
+    event_names = _event_names(events)
+
+    return {
+        "user_id": user["user_id"],
+        "scenario": user.get("scenario") or user.get("label"),
+        "events": {
+            "raw_events": event_names,
+            "event_stream": _event_stream(events),
+        },
+        "comms_history": [_normalize_comm_record(comm) for comm in comms],
+        "crm_context": _normalize_traits(traits),
+        "user_state": {
+            **(user.get("user_state") or {}),
+            "events_7d": len(event_names),
+            "messages_7d": len(comms),
+        },
+        "constraints": user.get("constraints") or {},
+    }
+
+
+def _event_names(events: Any) -> list:
+    if isinstance(events, dict):
+        if "raw_events" in events:
+            return events["raw_events"]
+        if "event_stream" in events:
+            return [event.get("event_name") for event in events["event_stream"]]
+        return []
+
+    return [
+        event.get("event_name") or event.get("type") or event.get("name")
+        for event in events
+        if event.get("event_name") or event.get("type") or event.get("name")
+    ]
+
+
+def _event_stream(events: Any) -> list:
+    if isinstance(events, dict):
+        return events.get("event_stream") or []
+
+    normalized = []
+    for index, event in enumerate(events):
+        event_name = event.get("event_name") or event.get("type") or event.get("name")
+        if not event_name:
+            continue
+        properties = {
+            key: value
+            for key, value in event.items()
+            if key not in {"event_name", "type", "name", "ts", "timestamp", "source", "channel", "device"}
+        }
+        normalized.append(
+            {
+                "event_id": event.get("event_id") or f"manual_evt_{index + 1:02d}",
+                "event_name": event_name,
+                "timestamp": event.get("timestamp") or event.get("ts"),
+                "source": event.get("source") or "manual_upload",
+                "channel": event.get("channel") or "web",
+                "device": event.get("device"),
+                "properties": properties,
+            }
+        )
+    return normalized
+
+
+def _normalize_comm_record(comm: Dict[str, Any]) -> Dict[str, Any]:
+    channel = comm.get("channel", "communication")
+    message = comm.get("message") or comm.get("body") or comm.get("text")
+    if not message:
+        opened = comm.get("opened")
+        clicked = comm.get("clicked")
+        engagement = "opened" if opened else "ignored"
+        if clicked:
+            engagement = "clicked"
+        message = f"{channel} communication was {engagement}."
+
+    return {
+        "channel": channel,
+        "direction": comm.get("direction") or "outbound",
+        "message": message,
+        "sent_at": comm.get("sent_at") or comm.get("timestamp") or comm.get("ts"),
+        "opened": comm.get("opened"),
+        "clicked": comm.get("clicked"),
+        "sentiment_hint": comm.get("sentiment_hint"),
+    }
+
+
+def _normalize_traits(traits: Dict[str, Any]) -> Dict[str, Any]:
+    tier = traits.get("customer_tier") or traits.get("tier") or "unknown"
+    return {
+        **traits,
+        "customer_tier": tier,
+        "ltv_segment": traits.get("ltv_segment") or _ltv_segment_for_tier(tier),
+        "geography": traits.get("geography") or traits.get("city"),
+        "total_orders": traits.get("total_orders", 0),
+        "average_order_value": traits.get("average_order_value", 0),
+        "last_purchase_days_ago": traits.get("last_purchase_days_ago", 30),
+        "preferred_channel": traits.get("preferred_channel") or "push",
+        "timezone": traits.get("timezone") or "Asia/Kolkata",
+        "support_status": traits.get("support_status") or "none",
+    }
+
+
+def _ltv_segment_for_tier(tier: str) -> str:
+    if tier in {"loyal", "gold", "platinum", "vip"}:
+        return "high_value"
+    if tier in {"silver", "returning"}:
+        return "mid_value"
+    if tier in {"bronze", "new"}:
+        return "low_value"
+    return "unknown"
+
+
+def _workspace_id(workspace_name: str) -> str:
+    clean = str(workspace_name).strip().lower().replace(" ", "_")
+    return clean or "default"
 
 
 def _dump_model(model):
