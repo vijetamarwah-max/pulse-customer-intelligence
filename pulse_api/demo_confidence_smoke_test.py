@@ -5,6 +5,10 @@ from .main import app
 
 def main() -> None:
     client = TestClient(app)
+    cold_action_centre = client.get("/api/action-centre?workspace_id=default")
+    if cold_action_centre.status_code != 200:
+        raise AssertionError(cold_action_centre.text)
+
     ingest = client.post("/api/demo/run-manual-event-stream")
     if ingest.status_code != 200:
         raise AssertionError(ingest.text)

@@ -235,6 +235,14 @@ def run_mixed_signal_scenarios():
 @app.get("/api/action-centre", response_model=ActionCentreResponse)
 def action_centre(workspace_id: str = "default"):
     workspace = workspace_store.get(workspace_id)
+    if workspace:
+        computed = workspace["computed"]
+        return _action_centre_response(computed)
+
+    if workspace_id == "default":
+        computed = _build_default_demo_dashboard()
+        return _action_centre_response(computed)
+
     if not workspace:
         raise HTTPException(
             status_code=404,
@@ -242,6 +250,10 @@ def action_centre(workspace_id: str = "default"):
         )
 
     computed = workspace["computed"]
+    return _action_centre_response(computed)
+
+
+def _action_centre_response(computed: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "workspace_id": computed["workspace_id"],
         "data_mode": computed["data_mode"],
