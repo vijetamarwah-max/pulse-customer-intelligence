@@ -12,7 +12,6 @@ from .demo_manual_event_stream import DEMO_MANUAL_EVENT_STREAM
 from .schemas import (
     ActionCentreResponse,
     APIMessage,
-    BehavioralStateRequest,
     DashboardData,
     EnterpriseDataIngestionRequest,
     EnterpriseDataIngestionResponse,
@@ -306,13 +305,14 @@ def profile():
 
 
 @app.post("/api/behavioral-state")
-def behavioral_state(payload: BehavioralStateRequest):
+def behavioral_state(payload: Dict[str, Any]):
     engine = BehavioralStateEngine()
+    normalized = _normalize_behavioral_state_payload(payload)
     return _dump_model(
         engine.run(
-            event_input=payload.event_input,
-            voc_input=payload.voc_input,
-            crm_input=payload.crm_input,
+            event_input=normalized["event_input"],
+            voc_input=normalized["voc_input"],
+            crm_input=normalized["crm_input"],
         )
     )
 
@@ -348,6 +348,92 @@ def _normalize_enterprise_payload(payload: Dict[str, Any]) -> EnterpriseDataInge
         "historical_outcomes": payload.get("historical_outcomes") or nested_data.get("historical_outcomes"),
     }
     return EnterpriseDataIngestionRequest(**normalized)
+
+
+def _normalize_behavioral_state_payload(payload: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+    """Accept backend-native and frontend-friendly behavioral state payloads.
+
+    Native shape:
+    {"event_input": {...}, "voc_input": {...}, "crm_input": {...}}
+
+    Frontend aliases:
+    {"event": {...}, "voc": {...}, "crm": {...}}
+    {"event_understanding": {...}, "voice_of_customer": {...}, "crm_context": {...}}
+    """
+    event_input = (
+        payload.get("event_input")
+        or payload.get("event")
+        or payload.get("event_understanding")
+        or payload.get("event_agent")
+    )
+    voc_input = (
+        payload.get("voc_input")
+        or payload.get("voc")
+        or payload.get("voice_of_customer")
+        or payload.get("voc_agent")
+    )
+    crm_input = (
+        payload.get("crm_input")
+        or payload.get("crm")
+        or payload.get("crm_context")
+        or payload.get("profile")
+    )
+
+    if not event_input or not voc_input or not crm_input:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "message": "Behavioral state requires event, VoC, and CRM inputs.",
+                "accepted_shapes": [
+                    {"event_input": {}, "voc_input": {}, "crm_input": {}},
+                    {"event": {}, "voc": {}, "crm": {}},
+                    {"event_understanding": {}, "voice_of_customer": {}, "crm_context": {}},
+                ],
+            },
+        )
+
+    event_input = _normalize_event_input(event_input)
+    voc_input = _normalize_voc_input(voc_input, event_input["user_id"])
+    crm_input = _normalize_crm_input(crm_input, event_input["user_id"])
+
+    return {
+        "event_input": event_input,
+        "voc_input": voc_input,
+        "crm_input": crm_input,
+    }
+
+
+def _normalize_event_input(event_input: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "user_id": event_input.get("user_id", "unknown_user"),
+        "intent_signals": event_input.get("intent_signals", event_input.get("signals", {})),
+        "behavioral_tags": event_input.get("behavioral_tags", event_input.get("tags", [])),
+        "confidence": event_input.get("confidence", 0.7),
+    }
+
+
+def _normalize_voc_input(voc_input: Dict[str, Any], fallback_user_id: str) -> Dict[str, Any]:
+    return {
+        "user_id": voc_input.get("user_id", fallback_user_id),
+        "signals": voc_input.get("signals", {}),
+        "behavioral_tags": voc_input.get("behavioral_tags", voc_input.get("tags", [])),
+        "confidence": voc_input.get("confidence", 0.7),
+    }
+
+
+def _normalize_crm_input(crm_input: Dict[str, Any], fallback_user_id: str) -> Dict[str, Any]:
+    crm_context = crm_input.get("crm_context")
+    if crm_context is None:
+        crm_context = {
+            key: value
+            for key, value in crm_input.items()
+            if key not in {"user_id", "confidence", "behavioral_tags", "tags"}
+        }
+
+    return {
+        "user_id": crm_input.get("user_id", fallback_user_id),
+        "crm_context": crm_context,
+    }
 
 
 def _normalize_user_record(user: Dict[str, Any]) -> Dict[str, Any]:
