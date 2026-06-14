@@ -82,78 +82,19 @@ def get_data():
             "action_centre": computed["action_centre"],
         }
 
+    computed = _build_default_demo_dashboard()
     return {
-        "metrics": {
-            "incremental_revenue": 418000,
-            "suppression_safety": 0.93,
-            "budget_leakage": 71000,
-            "communication_reduction": 0.22,
-        },
-        "evidence": [
-            {
-                "title": "Suppression protected revenue in high-fatigue users",
-                "detail": "Holdout users generated 4.1% less revenue than Pulse-suppressed users.",
-                "value": 184000,
-                "severity": "positive",
-            },
-            {
-                "title": "Onboarding step 3 is over-sending",
-                "detail": "Push plus WhatsApp overlap creates 2.8 contacts in 24h for 31% of new users.",
-                "value": 22000,
-                "severity": "warning",
-            },
-        ],
-        "journey_diagnostics": [
-            {
-                "journey_step": "Onboarding step 3",
-                "segment": "Activated, no order",
-                "send_pressure": 0.86,
-                "incremental_value": 0.22,
-                "fatigue_lift": 0.71,
-                "recommended_action": "Suppress WhatsApp if push was ignored in last 12h.",
-            },
-            {
-                "journey_step": "Cart reminder",
-                "segment": "High intent",
-                "send_pressure": 0.64,
-                "incremental_value": 0.68,
-                "fatigue_lift": 0.37,
-                "recommended_action": "Send only when trust score is above 0.55.",
-            },
-        ],
-        "user_decisions": [
-            {
-                "user_id": "A",
-                "state_label": "high_intent_high_fatigue",
-                "recommended_action": "suppress",
-                "confidence": 0.87,
-                "counterfactuals": {
-                    "suppress": 18.28,
-                    "send_product_recommendation": 14.22,
-                    "send_content": 5.31,
-                },
-            },
-            {
-                "user_id": "B",
-                "state_label": "low_trust_high_fatigue",
-                "recommended_action": "service_recovery",
-                "confidence": 0.82,
-                "counterfactuals": {
-                    "service_recovery": 22.4,
-                    "suppress": 17.1,
-                    "send_purchase_nudge": 4.8,
-                },
-            },
-        ],
+        "metrics": computed["metrics"],
+        "evidence": computed["evidence"],
+        "journey_diagnostics": computed["journey_diagnostics"],
+        "user_decisions": computed["user_decisions"],
         "data_mode": "demo",
         "connection_status": {
+            **computed["connection_status"],
             "connected": False,
-            "source_name": None,
-            "users_ingested": 0,
-            "recommendations_ready": 0,
-            "message": "Connect enterprise events, communication history, and CRM context to generate live Action Centre recommendations.",
+            "message": "Demo payload loaded. Process editable enterprise data to switch this workspace to live mode.",
         },
-        "action_centre": None,
+        "action_centre": computed["action_centre"],
     }
 
 
@@ -182,6 +123,12 @@ def _ingest_enterprise_payload(payload: EnterpriseDataIngestionRequest):
         "users_ingested": len(payload.users),
         "action_centre_url": "/api/action-centre",
     }
+
+
+def _build_default_demo_dashboard() -> Dict[str, Any]:
+    payload = _dump_model(EnterpriseDataIngestionRequest(**DEMO_MANUAL_EVENT_STREAM))
+    with _runtime_llm_mode(enabled=False):
+        return recommendation_service.build_action_centre(payload)
 
 
 @app.get("/api/demo/manual-event-stream")
