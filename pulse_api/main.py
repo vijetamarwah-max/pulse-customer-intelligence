@@ -125,8 +125,14 @@ def _ingest_enterprise_payload(payload: EnterpriseDataIngestionRequest):
     }
 
 
-def _build_default_demo_dashboard() -> Dict[str, Any]:
+DEMO_WORKSPACE_IDS = {"default", "flipster_ecommerce"}
+
+
+def _build_default_demo_dashboard(workspace_id: str = "default") -> Dict[str, Any]:
     payload = _dump_model(EnterpriseDataIngestionRequest(**DEMO_MANUAL_EVENT_STREAM))
+    payload["workspace_id"] = workspace_id
+    if workspace_id == "flipster_ecommerce":
+        payload["source_name"] = "manual_upload"
     with _runtime_llm_mode(enabled=False):
         return recommendation_service.build_action_centre(payload)
 
@@ -235,12 +241,16 @@ def run_mixed_signal_scenarios():
 @app.get("/api/action-centre", response_model=ActionCentreResponse)
 def action_centre(workspace_id: str = "default"):
     workspace = workspace_store.get(workspace_id)
+    if workspace_id in DEMO_WORKSPACE_IDS and _is_stale_demo_workspace(workspace):
+        computed = _build_default_demo_dashboard(workspace_id)
+        return _action_centre_response(computed)
+
     if workspace:
         computed = workspace["computed"]
         return _action_centre_response(computed)
 
-    if workspace_id == "default":
-        computed = _build_default_demo_dashboard()
+    if workspace_id in DEMO_WORKSPACE_IDS:
+        computed = _build_default_demo_dashboard(workspace_id)
         return _action_centre_response(computed)
 
     if not workspace:
@@ -263,6 +273,25 @@ def _action_centre_response(computed: Dict[str, Any]) -> Dict[str, Any]:
         "processing_trace": computed["processing_trace"],
         "action_centre": computed["action_centre"],
     }
+
+
+def _is_stale_demo_workspace(workspace) -> bool:
+    if not workspace:
+        return False
+
+    payload = workspace.get("payload", {})
+    source_name = payload.get("source_name")
+    workspace_id = payload.get("workspace_id")
+    users = payload.get("users", [])
+    if workspace_id not in DEMO_WORKSPACE_IDS:
+        return False
+    if len(users) != 5:
+        return False
+    if source_name not in {"manual_upload", "manual_demo_event_stream", "manual_5_user_event_stream_demo"}:
+        return False
+
+    metrics = workspace.get("computed", {}).get("metrics", {})
+    return float(metrics.get("average_confidence", 0.0)) < 0.75
 
 
 @app.get("/api/profile", response_model=ProfileResponse)
@@ -549,6 +578,7 @@ def _lovable_upload_sample(payload: Dict[str, Any]) -> Dict[str, Any]:
             "workspace": "Pulse AI Demo",
             "business_goal": payload.get("business_goal", "increase_revenue"),
             "constraints": payload.get("constraints", {}),
+            "historical_outcomes": payload.get("historical_outcomes", []),
             "users": [_to_lovable_user(user) for user in payload.get("users", [])],
         },
     }
