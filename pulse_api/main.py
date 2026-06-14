@@ -2,7 +2,7 @@ import os
 from contextlib import contextmanager
 from typing import Any, Dict
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from behavioral_state_engine.agent import BehavioralStateEngine
@@ -51,6 +51,11 @@ def health():
     return {"status": "ok", "message": "Pulse AI API is running"}
 
 
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return Response(status_code=204)
+
+
 @app.post("/api/login", response_model=LoginResponse)
 def login(payload: LoginRequest):
     if not payload.email or not payload.password:
@@ -72,30 +77,47 @@ def get_data():
     workspace = workspace_store.get()
     if workspace:
         computed = workspace["computed"]
-        return {
-            "metrics": computed["metrics"],
-            "evidence": computed["evidence"],
-            "journey_diagnostics": computed["journey_diagnostics"],
-            "user_decisions": computed["user_decisions"],
-            "data_mode": computed["data_mode"],
-            "connection_status": computed["connection_status"],
-            "action_centre": computed["action_centre"],
-        }
+        if _computed_has_recommendations(computed):
+            return _dashboard_response(computed)
 
     computed = _build_default_demo_dashboard()
+    return _dashboard_response(
+        computed,
+        data_mode="demo",
+        connected=False,
+        message="Demo payload loaded. Process editable enterprise data to switch this workspace to live mode.",
+    )
+
+
+def _dashboard_response(
+    computed: Dict[str, Any],
+    data_mode: str | None = None,
+    connected: bool | None = None,
+    message: str | None = None,
+) -> Dict[str, Any]:
+    connection_status = computed["connection_status"]
+    if connected is not None or message is not None:
+        connection_status = {
+            **connection_status,
+            **({} if connected is None else {"connected": connected}),
+            **({} if message is None else {"message": message}),
+        }
+
     return {
         "metrics": computed["metrics"],
         "evidence": computed["evidence"],
         "journey_diagnostics": computed["journey_diagnostics"],
         "user_decisions": computed["user_decisions"],
-        "data_mode": "demo",
-        "connection_status": {
-            **computed["connection_status"],
-            "connected": False,
-            "message": "Demo payload loaded. Process editable enterprise data to switch this workspace to live mode.",
-        },
+        "data_mode": data_mode or computed["data_mode"],
+        "connection_status": connection_status,
         "action_centre": computed["action_centre"],
     }
+
+
+def _computed_has_recommendations(computed: Dict[str, Any]) -> bool:
+    queue = computed.get("action_centre", {}).get("recommendation_queue", [])
+    metrics = computed.get("metrics", {})
+    return bool(queue) and int(metrics.get("users_scored", 0)) > 0
 
 
 @app.post(

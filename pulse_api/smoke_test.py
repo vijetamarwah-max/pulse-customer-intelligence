@@ -17,6 +17,7 @@ def main():
         "/api/get-data",
         headers={"Origin": lovable_origin},
     )
+    data_body = data.json()
     profile = client.get(
         "/api/profile",
         headers={"Origin": lovable_origin},
@@ -62,6 +63,9 @@ def main():
             "health": health.status_code,
             "login": login.status_code,
             "get_data": data.status_code,
+            "get_data_recommendations": len(
+                data_body.get("action_centre", {}).get("recommendation_queue", [])
+            ),
             "profile": profile.status_code,
             "behavioral_state": behavioral_state.status_code,
             "cors_origin": data.headers.get("access-control-allow-origin"),
