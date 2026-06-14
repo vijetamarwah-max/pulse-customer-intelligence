@@ -1,3 +1,5 @@
+import os
+from contextlib import contextmanager
 from typing import Any, Dict
 
 from fastapi import FastAPI, HTTPException
@@ -166,7 +168,8 @@ def ingest_enterprise_data(payload: Dict[str, Any]):
 
 def _ingest_enterprise_payload(payload: EnterpriseDataIngestionRequest):
     payload_dict = _dump_model(payload)
-    computed = recommendation_service.build_action_centre(payload_dict)
+    with _runtime_llm_mode(enabled=bool(payload_dict.pop("runtime_llm_enabled", False))):
+        computed = recommendation_service.build_action_centre(payload_dict)
     workspace_store.save(
         workspace_id=payload.workspace_id,
         payload=payload_dict,
@@ -185,6 +188,11 @@ def _ingest_enterprise_payload(payload: EnterpriseDataIngestionRequest):
 @app.get("/api/demo/manual-event-stream")
 def demo_manual_event_stream():
     return DEMO_MANUAL_EVENT_STREAM
+
+
+@app.get("/api/demo/enterprise-upload-sample")
+def demo_enterprise_upload_sample():
+    return _lovable_upload_sample(DEMO_MANUAL_EVENT_STREAM)
 
 
 @app.post(
@@ -460,6 +468,73 @@ def _ltv_segment_for_tier(tier: str) -> str:
 def _workspace_id(workspace_name: str) -> str:
     clean = str(workspace_name).strip().lower().replace(" ", "_")
     return clean or "default"
+
+
+def _lovable_upload_sample(payload: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "workspace": "Flipster Ecommerce",
+        "source": "manual_upload",
+        "data": {
+            "workspace": "Pulse AI Demo",
+            "business_goal": payload.get("business_goal", "increase_revenue"),
+            "constraints": payload.get("constraints", {}),
+            "users": [_to_lovable_user(user) for user in payload.get("users", [])],
+        },
+    }
+
+
+def _to_lovable_user(user: Dict[str, Any]) -> Dict[str, Any]:
+    crm_context = user.get("crm_context", {})
+    return {
+        "user_id": user["user_id"],
+        "label": user.get("scenario"),
+        "traits": {
+            "tier": crm_context.get("customer_tier"),
+            "ltv_segment": crm_context.get("ltv_segment"),
+            "city": crm_context.get("geography", "Mumbai"),
+            "preferred_channel": crm_context.get("preferred_channel"),
+            "support_status": crm_context.get("support_status"),
+            "nps": crm_context.get("nps"),
+            "total_orders": crm_context.get("total_orders"),
+            "average_order_value": crm_context.get("average_order_value"),
+            "last_purchase_days_ago": crm_context.get("last_purchase_days_ago"),
+        },
+        "events": [
+            {
+                "type": event.get("event_name"),
+                "ts": event.get("timestamp"),
+                **(event.get("properties") or {}),
+            }
+            for event in user.get("events", {}).get("event_stream", [])
+        ],
+        "comms": [
+            {
+                "channel": comm.get("channel"),
+                "direction": comm.get("direction"),
+                "ts": comm.get("sent_at"),
+                "message": comm.get("message"),
+                "opened": comm.get("opened"),
+                "clicked": comm.get("clicked"),
+                "sentiment_hint": comm.get("sentiment_hint"),
+            }
+            for comm in user.get("comms_history", [])
+        ],
+        "user_state": user.get("user_state", {}),
+    }
+
+
+@contextmanager
+def _runtime_llm_mode(enabled: bool):
+    previous = os.environ.get("PULSE_DISABLE_RUNTIME_LLM")
+    if not enabled:
+        os.environ["PULSE_DISABLE_RUNTIME_LLM"] = "true"
+    try:
+        yield
+    finally:
+        if previous is None:
+            os.environ.pop("PULSE_DISABLE_RUNTIME_LLM", None)
+        else:
+            os.environ["PULSE_DISABLE_RUNTIME_LLM"] = previous
 
 
 def _dump_model(model):
